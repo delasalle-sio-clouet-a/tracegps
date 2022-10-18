@@ -255,6 +255,7 @@ class Trace
             $pdt->setVitesse(0);
             $this->lesPointsDeTrace[] = $pdt;
             // test push
+            // tema le push
         }
         else
         {
