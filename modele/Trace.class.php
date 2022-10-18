@@ -254,6 +254,7 @@ class Trace
             $pdt->setTempsCumule(0);
             $pdt->setVitesse(0);
             $this->lesPointsDeTrace[] = $pdt;
+            // test push
         }
         else
         {
