@@ -344,17 +344,54 @@ class DAO
     
     
     // --------------------------------------------------------------------------------------
-    // début de la zone attribuée au développeur 1 (xxxxxxxxxxxxxxxxxxxx) : lignes 350 à 549
+    // début de la zone attribuée au développeur 1 (Brault Natan) : lignes 350 à 549
     // --------------------------------------------------------------------------------------
     
 
+    public function existeAdrMailUtilisateur($adrMail) {
+        
+        // préparation de la requête de recherche de l'adresse mail
+        $txt_req = "SELECT adrMail from tracegps_utilisateurs" ;
+        $txt_req = " where adrMail = :adr";
+        $req = $this->cnx->prepare($txt_req);
+        // liaison de la requête et de ses paramètres
+        $req->bindValue("adr", utf8_decode($adrMail), PDO::PARAM_STR);
+        // exécution de la requête
+        $req->setFetchMode(PDO::FETCH_OBJ);
+        $req->execute();
+        $nbReponses = $req->fetchColumn(0);
+        // libère les ressources du jeu de données
+        $req->closeCursor();
+        
+        // fourniture de la réponse
+        if ($nbReponses == null || $nbReponses == "") {
+            return false;
+        }
+        else 
+        {
+            return true;
+        }
+            
+        
+    }
     
     
     
     
     
-    
-    
+    public function getLesUtilisateursAutorisant($idUtilisateur)
+    {
+        // préparation de la requête de recherche de l'adresse mail
+        $txt_req = "SELECT * FROM tracegps_autorisations join tracegps_utilisateurs on tracegps_utilisateurs.id = tracegps_autorisations.idAutorisant" ;
+        $txt_req = "WHERE idAutorise = :idUtilisateur";
+        $req = $this->cnx->prepare($txt_req);
+        // liaison de la requête et de ses paramètres
+        $req->bindValue("idUtilisateur", utf8_decode($idUtilisateur), PDO::PARAM_STR);
+        $req->setFetchMode(PDO::FETCH_OBJ);
+        
+        
+        //  
+    }
     
     
     
