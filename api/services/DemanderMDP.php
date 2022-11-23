@@ -14,7 +14,6 @@
 // Les paramètres doivent être passés par la méthode GET :
 //     http://<hébergeur>/tracegps/api/CreerUnUtilisateur?pseudo=turlututu&adrMail=delasalle.sio.eleves@gmail.com&numTel=1122334455&lang=xml
 
-// test modif2
 
 // connexion du serveur web à la base MySQL
 $dao = new DAO();
