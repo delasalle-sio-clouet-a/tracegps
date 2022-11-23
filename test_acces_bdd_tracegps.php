@@ -3,6 +3,7 @@
 // fichier : test_acces_bdd_tracegps.php
 // Rôle : test de l'accès à la base de données tracegps sur le serveur MySql en localhost
 // Dernière mise à jour : 12/7/2021 par dPlanchet
+include_once ('modele/DAO.class.php');
 ?>
 <!DOCTYPE html>
 <html>
@@ -30,8 +31,11 @@ catch (Exception $ex)
 {	echo ("Echec de la connexion à la base de données tracegps <br>");
     echo ("Erreur numero : " . $ex->getCode() . "<br />" . "Description : " . utf8_encode($ex->getMessage()) . "<br>");
 }
+
+
 unset($cnx);
 ?>
+
 
 </body>
 </html>
