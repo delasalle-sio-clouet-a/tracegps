@@ -26,82 +26,136 @@
 <body>
 
 <?php
-// connexion du serveur web à la base MySQL
-include_once ('DAO.class.php');
-$dao = new DAO();
+    // connexion du serveur web à la base MySQL
+    include_once ('DAO.class.php');
+    $dao = new DAO();
+    
+    
+    // test de la méthode existeAdrMailUtilisateur ----------------------------------------------------------
+    // modifié par Natan Brault le 22/11/2022
+    echo "<h3>Test de existeAdrMailUtilisateur : </h3>";
+    if ($dao->existeAdrMailUtilisateur("admin@gmail.com")) $existe = "oui"; else $existe = "non";
+    echo "<p>Existence de l'utilisateur 'admin@gmail.com' : <b>" . $existe . "</b><br>";
+    if ($dao->existeAdrMailUtilisateur("delasalle.sio.eleves@gmail.com")) $existe = "oui"; else $existe = "non";
+    echo "Existence de l'utilisateur 'delasalle.sio.eleves@gmail.com' : <b>" . $existe . "</b></br>";
+    
+    // test de la méthode getLesUtilisateursAutorisant ----------------------------------------------------------
+    // modifié par Natan Brault le 22/11/2022
+    
+    echo "<h3>Test de getLesUtilisateursAutorisant(idUtilisateur) : </h3>";
+    $lesUtilisateurs = $dao->getLesUtilisateursAutorisant(4);
+    $nbReponses = sizeof($lesUtilisateurs);
+    echo "<p>Nombre d'utilisateurs autorisant l'utilisateur 4 à voir leurs parcours : " . $nbReponses . "</p>";
+    // affichage des utilisateurs
+    foreach ($lesUtilisateurs as $unUtilisateur)
+    { echo ($unUtilisateur->toString());
+    echo ('<br>');
+    }
+    
+    // test de la méthode getLesUtilisateursAutorise ----------------------------------------------------------
+    // modifié par Natan Brault le 23/11/2022
+    
+    echo "<h3>Test de getLesUtilisateursAutorises(idUtilisateur) : </h3>";
+    $lesUtilisateurs = $dao->getLesUtilisateursAutorises(2);
+    $nbReponses = sizeof($lesUtilisateurs);
+    echo "<p>Nombre d'utilisateurs autorisés par l'utilisateur 2 : " . $nbReponses . "</p>";
+    // affichage des utilisateurs
+    foreach ($lesUtilisateurs as $unUtilisateur)
+    { echo ($unUtilisateur->toString());
+    echo ('<br>');
+    }
+    
+    // test de la méthode autoriseAConsulter ----------------------------------------------------------
+    // modifié par Natan Brault le 23/11/2022
+    echo "<h3>Test de autoriseAConsulter : </h3>";
+    if ($dao->autoriseAConsulter(2, 3)) $autorise = "oui"; else $autorise = "non";
+    echo "<p>L'utilisateur 2 autorise l'utilisateur 3 : <b>" . $autorise . "</b><br>";
+    if ($dao->autoriseAConsulter(3, 2)) $autorise = "oui"; else $autorise = "non";
+    echo "<p>L'utilisateur 3 autorise l'utilisateur 2 : <b>" . $autorise . "</b><br>";
+    
+    
+    // test de la méthode creerUneAutorisation ---------------------------------------------------------
+    // modifié par dP le Natan Brault le 23/11/2022
+    echo "<h3>Test de creerUneAutorisation : </h3>";
+    if ($dao->creerUneAutorisation(2, 1)) $ok = "oui"; else $ok = "non";
+    echo "<p>La création de l'autorisation de l'utilisateur 2 vers l'utilisateur 1 a réussi : <b>" . $ok . "</b><br>";
+    // la même autorisation ne peut pas être enregistrée 2 fois
+    if ($dao->creerUneAutorisation(2, 1)) $ok = "oui"; else $ok = "non";
+    echo "<p>La création de l'autorisation de l'utilisateur 2 vers l'utilisateur 1 a réussi : <b>" . $ok . "</b><br>";
+    
+    
+    // test de la méthode supprimerUneAutorisation ----------------------------------------------------
+    // modifié par Natan Brault le 23/11/2022
+    echo "<h3>Test de supprimerUneAutorisation : </h3>";
+    // on crée une autorisation
+    if ($dao->creerUneAutorisation(2, 1)) $ok = "oui"; else $ok = "non";
+    echo "<p>La création de l'autorisation de l'utilisateur 2 vers l'utilisateur 1 a réussi : <b>" . $ok . "</b><br>";
+    // puis on la supprime
+    if ($dao->supprimerUneAutorisation(2, 1)) $ok = "oui"; else $ok = "non";
+    echo "<p>La suppression de l'autorisation de l'utilisateur 2 vers l'utilisateur 1 a réussi : <b>" . $ok . "</b><br>";
+    
+    
+    
+    // test de la méthode getLesPointsDeTrace ---------------------------------------------------------
+    // modifié par Natan Brault le 23/11/2022
+    echo "<h3>Test de getLesPointsDeTrace : </h3>";
+    $lesPoints = $dao->getLesPointsDeTrace(1);
+    $nbPoints = sizeof($lesPoints);
+    echo "<p>Nombre de points de la trace 1 : " . $nbPoints . "</p>";
+    // affichage des points
+    foreach ($lesPoints as $unPoint)
+    { echo ($unPoint->toString());
+    echo ('<br>');
+    }
+    
+    
+    // test de la méthode creerUnPointDeTrace ---------------------------------------------------------
+    // modifié par Natan Brault le 23/11/2022
+    echo "<h3>Test de creerUnPointDeTrace : </h3>";
+    // on affiche d'abord le nombre de points (5) de la trace 1
+    $lesPoints = $dao->getLesPointsDeTrace(1);
+    $nbPoints = sizeof($lesPoints);
+    echo "<p>Nombre de points de la trace 1 : " . $nbPoints . "</p>";
+    // on crée un sixième point et on l'ajoute à la trace 1
+    $unIdTrace = 1;
+    $unID = 6;
+    $uneLatitude = 48.20;
+    $uneLongitude = -1.55;
+    $uneAltitude = 50;
+    $uneDateHeure = date('Y-m-d H:i:s', time());
+    $unRythmeCardio = 80;
+    $unTempsCumule = 0;
+    $uneDistanceCumulee = 0;
+    $uneVitesse = 15;
+    $unPoint = new PointDeTrace($unIdTrace, $unID, $uneLatitude, $uneLongitude, $uneAltitude, $uneDateHeure,
+        $unRythmeCardio, $unTempsCumule, $uneDistanceCumulee, $uneVitesse);
+    $ok = $dao->creerUnPointDeTrace($unPoint);
+    // on affiche à nouveau le nombre de points (6) de la trace 1
+    $lesPoints = $dao->getLesPointsDeTrace(1);
+    $nbPoints = sizeof($lesPoints);
+    echo "<p>Nombre de points de la trace 1 : " . $nbPoints . "</p>";
+    echo ('<br>');
+    
+    
 
-
-// test de la méthode existeAdrMailUtilisateur ----------------------------------------------------------
-// modifié par Natan Brault le 22/11/2022
-echo "<h3>Test de existeAdrMailUtilisateur : </h3>";
-if ($dao->existeAdrMailUtilisateur("admin@gmail.com")) $existe = "oui"; else $existe = "non";
-echo "<p>Existence de l'utilisateur 'admin@gmail.com' : <b>" . $existe . "</b><br>";
-if ($dao->existeAdrMailUtilisateur("delasalle.sio.eleves@gmail.com")) $existe = "oui"; else $existe = "non";
-echo "Existence de l'utilisateur 'delasalle.sio.eleves@gmail.com' : <b>" . $existe . "</b></br>";
-
-// test de la méthode getLesUtilisateursAutorisant ----------------------------------------------------------
-// modifié par Natan Brault le 22/11/2022
-
-echo "<h3>Test de getLesUtilisateursAutorisant(idUtilisateur) : </h3>";
-$lesUtilisateurs = $dao->getLesUtilisateursAutorisant(4);
-$nbReponses = sizeof($lesUtilisateurs);
-echo "<p>Nombre d'utilisateurs autorisant l'utilisateur 4 à voir leurs parcours : " . $nbReponses . "</p>";
-// affichage des utilisateurs
-foreach ($lesUtilisateurs as $unUtilisateur)
-{ echo ($unUtilisateur->toString());
-echo ('<br>');
-}
-
-// test de la méthode getLesUtilisateursAutorise ----------------------------------------------------------
-// modifié par Natan Brault le 23/11/2022
-
-echo "<h3>Test de getLesUtilisateursAutorises(idUtilisateur) : </h3>";
-$lesUtilisateurs = $dao->getLesUtilisateursAutorises(2);
-$nbReponses = sizeof($lesUtilisateurs);
-echo "<p>Nombre d'utilisateurs autorisés par l'utilisateur 2 : " . $nbReponses . "</p>";
-// affichage des utilisateurs
-foreach ($lesUtilisateurs as $unUtilisateur)
-{ echo ($unUtilisateur->toString());
-echo ('<br>');
-}
-
-// test de la méthode autoriseAConsulter ----------------------------------------------------------
-// modifié par Natan Brault le 23/11/2022
-echo "<h3>Test de autoriseAConsulter : </h3>";
-if ($dao->autoriseAConsulter(2, 3)) $autorise = "oui"; else $autorise = "non";
-echo "<p>L'utilisateur 2 autorise l'utilisateur 3 : <b>" . $autorise . "</b><br>";
-if ($dao->autoriseAConsulter(3, 2)) $autorise = "oui"; else $autorise = "non";
-echo "<p>L'utilisateur 3 autorise l'utilisateur 2 : <b>" . $autorise . "</b><br>";
-
-
-// test de la méthode creerUneAutorisation ---------------------------------------------------------
-// modifié par dP le Natan Brault le 23/11/2022
-echo "<h3>Test de creerUneAutorisation : </h3>";
-if ($dao->creerUneAutorisation(2, 1)) $ok = "oui"; else $ok = "non";
-echo "<p>La création de l'autorisation de l'utilisateur 2 vers l'utilisateur 1 a réussi : <b>" . $ok . "</b><br>";
-// la même autorisation ne peut pas être enregistrée 2 fois
-if ($dao->creerUneAutorisation(2, 1)) $ok = "oui"; else $ok = "non";
-echo "<p>La création de l'autorisation de l'utilisateur 2 vers l'utilisateur 1 a réussi : <b>" . $ok . "</b><br>";
-
-
-// test de la méthode supprimerUneAutorisation ----------------------------------------------------
-// modifié par Natan Brault le 23/11/2022
-echo "<h3>Test de supprimerUneAutorisation : </h3>";
-// on crée une autorisation
-if ($dao->creerUneAutorisation(2, 1)) $ok = "oui"; else $ok = "non";
-echo "<p>La création de l'autorisation de l'utilisateur 2 vers l'utilisateur 1 a réussi : <b>" . $ok . "</b><br>";
-// puis on la supprime
-if ($dao->supprimerUneAutorisation(2, 1)) $ok = "oui"; else $ok = "non";
-echo "<p>La suppression de l'autorisation de l'utilisateur 2 vers l'utilisateur 1 a réussi : <b>" . $ok . "</b><br>";
-
-
-
-
-
-
-
-
-
+    // test de la méthode getUneTrace -----------------------------------------------------------------
+    // modifié par Natan Brault le 23/11/2022
+    echo "<h3>Test de getUneTrace : </h3>";
+    $uneTrace = $dao->getUneTrace(2);
+    if ($uneTrace) {
+        echo "<p>La trace 2 existe : <br>" . $uneTrace->toString() . "</p>";
+    }
+    else {
+        echo "<p>La trace 2 n'existe pas !</p>";
+    }
+    $uneTrace = $dao->getUneTrace(100);
+    if ($uneTrace) {
+        echo "<p>La trace 100 existe : <br>" . $uneTrace->toString() . "</p>";
+    }
+    else {
+        echo "<p>La trace 100 n'existe pas !</p>";
+    }
+    
 
 
 

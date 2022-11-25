@@ -541,11 +541,101 @@ class DAO
     }
     
     
+    public function getLesPointsDeTrace($idTrace)
+    {
+        
+        // préparation de la requête de recherche de l'adresse mail
+        $txt_req = "SELECT * FROM tracegps_points" ;
+        $txt_req .= " WHERE idTrace = :idtrace";
+        $req = $this->cnx->prepare($txt_req);
+        // liaison de la requête et de ses paramètres
+        $req->bindValue("idtrace", utf8_encode($idTrace), PDO::PARAM_INT);
+        $req->execute();
+        //$req->setFetchMode(PDO::FETCH_OBJ);
+        $uneLigne = $req->fetch(PDO::FETCH_OBJ);
+        $lesPoints = array();
+        // tant qu'une ligne est trouvée :
+        
+        while ($uneLigne) {
+            
+            $unIdTrace = utf8_encode($uneLigne->idTrace);
+            $unID = utf8_encode($uneLigne->id);
+            $uneLatitude = utf8_encode($uneLigne->latitude);
+            $uneLongitude = utf8_encode($uneLigne->longitude);
+            $uneAltitude = utf8_encode($uneLigne->altitude);
+            $uneDateHeure = utf8_encode($uneLigne->dateHeure);
+            $unRythmeCardio = utf8_encode($uneLigne->rythmeCardio);
+
+            $unPointDeTrace = new PointDeTrace($unIdTrace, $unID, $uneLatitude, $uneLongitude, $uneAltitude, $uneDateHeure, $unRythmeCardio,0,0,0);
+          
+            
+            $lesPoints[] = $unPointDeTrace;
+            
+            $uneLigne = $req->fetch(PDO::FETCH_OBJ);
+            
+        }
+        // libère les ressources du jeu de données
+        $req->closeCursor();
+        
+        return $lesPoints;
+        
+    }
     
     
     
+    public function creerUnPointDeTrace($unPointDeTrace)
+    
+    {
+        
+        // préparation de la requête
+        $txt_req = "INSERT INTO `tracegps_points` (idTrace,id,latitude,longitude,altitude,dateHeure,rythmeCardio)";
+        $txt_req .= " values (:idTrace,:id,:latitude,:longitude,:altitude,:dateHeure,:rythmeCardio)";
+        $req = $this->cnx->prepare($txt_req);
+        // liaison de la requête et de ses paramètres
+        $req->bindValue("idTrace", utf8_encode($unPointDeTrace->getIdTrace()), PDO::PARAM_INT);
+        $req->bindValue("id", utf8_encode($unPointDeTrace->getId()), PDO::PARAM_INT);
+        $req->bindValue("latitude", utf8_encode($unPointDeTrace->getLatitude()), PDO::PARAM_STR);
+        $req->bindValue("longitude", utf8_encode($unPointDeTrace->getLongitude()), PDO::PARAM_STR);
+        $req->bindValue("altitude", utf8_encode($unPointDeTrace->getAltitude()), PDO::PARAM_STR);
+        /*
+        // si c'est la première de la trace on la met en temps que date de début
+        if($unPointDeTrace->id == 1)
+        {
+            
+        }
+        */
+        $req->bindValue("dateHeure", utf8_encode($unPointDeTrace->getDateHeure()), PDO::PARAM_STR);
+        $req->bindValue("rythmeCardio", utf8_encode($unPointDeTrace->getRythmeCardio()), PDO::PARAM_STR);
+        // exécution de la requête
+        $ok = $req->execute();
+        // sortir en cas d'échec
+        if ( ! $ok) { return false; }
+        
+        return true;
+        
+        
+        
+    }
     
     
+    public function getUneTrace($idTrace)
+    {
+        // préparation de la requête de recherche des autorisations
+        $txt_req = "SELECT idTrace FROM `tracegps_points`";
+        $txt_req .= " WHERE idTrace = :idTrace";
+        $req = $this->cnx->prepare($txt_req);
+        // liaison de la requête et de ses paramètres
+        $req->bindValue("idTrace", utf8_encode($idTrace), PDO::PARAM_STR);
+        $req->bindValue("idAutorisant", utf8_encode($idAutorisant), PDO::PARAM_STR);
+        // exécution de la requête
+        $req->execute();
+        
+        if ( !$req) { return false; }
+        
+        return ;
+        
+        
+    }
     
     
     
