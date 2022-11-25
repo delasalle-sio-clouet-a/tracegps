@@ -159,7 +159,7 @@
 
 
     // test de la méthode getToutesLesTraces ----------------------------------------------------------
-    // modifié par Natan Brault le 23/11/2022
+    // modifié par Natan Brault le 25/11/2022
     echo "<h3>Test de getToutesLesTraces : </h3>";
     $lesTraces = $dao->getToutesLesTraces();
     $nbReponses = sizeof($lesTraces);
@@ -171,7 +171,7 @@
     }
     
     // test de la méthode getLesTraces($idUtilisateur) ------------------------------------------------
-    // modifié par Natan Brault le 23/11/2022
+    // modifié par Natan Brault le 25/11/2022
     echo "<h3>Test de getLesTraces(idUtilisateur) : </h3>";
     $lesTraces = $dao->getLesTraces(2);
     $nbReponses = sizeof($lesTraces);
@@ -184,7 +184,7 @@
     
     
     // test de la méthode getLesTracesAutorisees($idUtilisateur) --------------------------------------
-    // modifié par Natan Brault le 23/11/2022
+    // modifié par Natan Brault le 25/11/2022
     echo "<h3>Test de getLesTracesAutorisees(idUtilisateur) : </h3>";
     $lesTraces = $dao->getLesTracesAutorisees(2);
     $nbReponses = sizeof($lesTraces);
@@ -205,7 +205,7 @@
     
     
     // test de la méthode creerUneTrace ----------------------------------------------------------
-    // modifié par Natan Brault le 23/11/2022
+    // modifié par Natan Brault le 25/11/2022
     echo "<h3>Test de creerUneTrace : </h3>";
     $trace1 = new Trace(0, "2017-12-18 14:00:00", "2017-12-18 14:10:00", true, 3);
     $ok = $dao->creerUneTrace($trace1);
@@ -226,10 +226,35 @@
         echo "<p>Echec lors de l'enregistrement de la trace !</p>";
     }
     
+    // test de la méthode supprimerUneTrace -----------------------------------------------------------
+    // modifié par Natan Brault le 25/11/2022
+    echo "<h3>Test de supprimerUneTrace : </h3>";
+    $ok = $dao->supprimerUneTrace(22);
+    if ($ok) {
+        echo "<p>Trace bien supprimée !</p>";
+    }
+    else {
+        echo "<p>Echec lors de la suppression de la trace !</p>";
+    }
     
     
-    
-    
+    // test des méthodes creerUnPointDeTrace et terminerUneTrace --------------------------------------
+    // modifié par Natan Brault le 25/11/2022
+    echo "<h3>Test de terminerUneTrace : </h3>";
+    // on choisit une trace non terminée
+    $unIdTrace = 3;
+    // on l'affiche
+    $laTrace = $dao->getUneTrace($unIdTrace);
+    echo "<h4>l'objet laTrace avant l'appel de la méthode terminerUneTrace : </h4>";
+    echo ($laTrace->toString());
+    echo ('<br>');
+    // on la termine
+    $dao->terminerUneTrace($unIdTrace);
+    // et on l'affiche à nouveau
+    $laTrace = $dao->getUneTrace($unIdTrace);
+    echo "<h4>l'objet laTrace après l'appel de la méthode terminerUneTrace : </h4>";
+    echo ($laTrace->toString());
+    echo ('<br>');
     
     
     

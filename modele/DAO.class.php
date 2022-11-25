@@ -629,7 +629,7 @@ class DAO
         $txt_req .= " WHERE id = :idTrace";
         $req = $this->cnx->prepare($txt_req);
         // liaison de la requête et de ses paramètres
-        $req->bindValue("idTrace", utf8_encode($idTrace), PDO::PARAM_STR);
+        $req->bindValue(":idTrace", utf8_encode($idTrace), PDO::PARAM_STR);
 
         // exécution de la requête
         $req->execute();
@@ -712,7 +712,7 @@ class DAO
         $txt_req .= " WHERE `idUtilisateur` = :idUtilisateur";
         $req = $this->cnx->prepare($txt_req);
         // liaison de la requête et de ses paramètres
-        $req->bindValue("idUtilisateur", utf8_encode($idUtilisateur), PDO::PARAM_INT);
+        $req->bindValue(":idUtilisateur", utf8_encode($idUtilisateur), PDO::PARAM_INT);
         
         // exécution de la requête
         $req->execute();
@@ -779,27 +779,26 @@ class DAO
     
     public function creerUneTrace($uneTrace)
     {
-        $txt_req = "INSERT INTO `tracegps_trace` (`dateDebut`, `dateFin`, `terminee`, `idUtilisateur`)";
+        $txt_req = "INSERT INTO `tracegps_traces` (`dateDebut`, `dateFin`, `terminee`, `idUtilisateur`)";
         $txt_req .= " values (:dateDebut,:dateFin,:terminee,:idUtilisateur)";
         $req = $this->cnx->prepare($txt_req);
         // liaison de la requête et de ses paramètres
         //$req->bindValue("id", utf8_encode($uneTrace->getId()), PDO::PARAM_INT);
-        $req->bindValue("dateDebut", utf8_encode($uneTrace->getDateHeureDebut()), PDO::PARAM_STR);
-        /*
-        if(utf8_encode($uneTrace->getDateHeureFin()) == NULL)
+        $req->bindValue(":dateDebut", utf8_encode($uneTrace->getDateHeureDebut()), PDO::PARAM_STR);
+        
+        if($uneTrace->getDateHeureFin() == NULL)
         {
-            $req->bindValue("dateFin",PDO::PARAM_NULL);;
+            $req->bindValue(":dateFin",PDO::PARAM_NULL);
         }
         else 
         {
-            $req->bindValue("dateFin", utf8_encode($uneTrace->getDateHeureFin()), PDO::PARAM_STR);
+            $req->bindValue(":dateFin", utf8_encode($uneTrace->getDateHeureFin()), PDO::PARAM_STR);
         }
-        */
-        $req->bindValue("dateFin", utf8_encode($uneTrace->getDateHeureFin()), PDO::PARAM_STR);
         
-        $req->bindValue("terminee", utf8_encode($uneTrace->getTerminee()), PDO::PARAM_BOOL);
-        $req->bindValue("idUtilisateur", utf8_encode($uneTrace->getIdUtilisateur()), PDO::PARAM_INT);
- 
+        
+        $req->bindValue(":terminee", utf8_encode($uneTrace->getTerminee()), PDO::PARAM_BOOL);
+        $req->bindValue(":idUtilisateur", utf8_encode($uneTrace->getIdUtilisateur()), PDO::PARAM_INT);
+
         // exécution de la requête
         $ok = $req->execute();
 
@@ -810,9 +809,64 @@ class DAO
     }
     
     
+    public function supprimerUneTrace($idTrace)
+    {
+        
+        // préparation de la requête
+        $txt_req = "DELETE FROM tracegps_points";
+        $txt_req .= " WHERE idTrace= :idTrace;";
+        $txt_req .= "DELETE FROM tracegps_traces";
+        $txt_req .= " WHERE id= :idTrace;";
+        $req = $this->cnx->prepare($txt_req);
+        // liaison de la requête et de ses paramètres
+        $req->bindValue(":idTrace", utf8_encode($idTrace), PDO::PARAM_INT);
+        
+        //echo json_encode($req);
+        
+        // exécution de la requête
+        $ok = $req->execute();
+        // sortir en cas d'échec
+        if ( ! $ok) { return false; }
+        
+        return true;
+        
+        
+    }
     
     
-    
+    public function terminerUneTrace($idTrace)
+    {
+        
+        $trace = $this->getUneTrace($idTrace);
+        
+        if($trace->getTerminee()) { return false;}
+        
+        
+        $pdts = $this->getLesPointsDeTrace($idTrace); 
+         
+        // préparation de la requête
+        $txt_req = "update tracegps_traces set terminee = :terminee, dateFin = :dateFin";
+        $txt_req .= " where id = :idTrace";
+        $req = $this->cnx->prepare($txt_req);
+        // liaison de la requête et de ses paramètres
+        $req->bindValue(":terminee", TRUE, PDO::PARAM_BOOL);
+        if(sizeof($pdts) == 0)
+        {
+            $req->bindValue(":dateFin", date('Y-m-d H:i:s', time()), PDO::PARAM_STR);
+        }
+        else
+        {
+            $req->bindValue(":dateFin", $pdts[sizeof($pdts)-1]->getDateHeure(), PDO::PARAM_STR);
+        }
+        
+        $req->bindValue(":idTrace", $idTrace,PDO::PARAM_INT);
+        // exécution de la requête
+        $ok = $req->execute();
+        
+        
+        return $ok;
+        
+    }
     
     
     
