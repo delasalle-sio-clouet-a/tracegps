@@ -597,13 +597,17 @@ class DAO
         $req->bindValue("latitude", utf8_encode($unPointDeTrace->getLatitude()), PDO::PARAM_STR);
         $req->bindValue("longitude", utf8_encode($unPointDeTrace->getLongitude()), PDO::PARAM_STR);
         $req->bindValue("altitude", utf8_encode($unPointDeTrace->getAltitude()), PDO::PARAM_STR);
-        /*
         // si c'est la première de la trace on la met en temps que date de début
-        if($unPointDeTrace->id == 1)
+        if($unPointDeTrace->getId() == 1)
         {
+            $txt_req2 = "UPDATE `tracegps_vue_traces`";
+            $txt_req2 .= " SET dateDebut = :dateDebut WHERE id = :idTrace";
+            $req2 = $this->cnx->prepare($txt_req2);
             
+            $req2->bindValue("idTrace", utf8_encode($unPointDeTrace->getIdTrace()), PDO::PARAM_INT);
+            $req2->bindValue("dateDebut", utf8_encode($unPointDeTrace->getDateHeure()), PDO::PARAM_STR);
         }
-        */
+
         $req->bindValue("dateHeure", utf8_encode($unPointDeTrace->getDateHeure()), PDO::PARAM_STR);
         $req->bindValue("rythmeCardio", utf8_encode($unPointDeTrace->getRythmeCardio()), PDO::PARAM_STR);
         // exécution de la requête
@@ -643,7 +647,11 @@ class DAO
         
         $trace = new Trace($unID, $uneDateHeureDebut, $uneDateHeureFin, $terminee, $unIdUtilisateur);
         
-        $trace->setLesPointsDeTrace($this->getLesPointsDeTrace($idTrace));
+
+        foreach ($this->getLesPointsDeTrace($unID) as $pdt)
+        {
+            $trace->ajouterPoint($pdt);
+        }
         
         return $trace;
         
@@ -652,18 +660,127 @@ class DAO
     
     
     
+    public function getToutesLesTraces()
+    {
+        // préparation de la requête de recherche des autorisations
+        $txt_req = "SELECT * FROM `tracegps_vue_traces`";
+        $req = $this->cnx->prepare($txt_req);
+       
+        // exécution de la requête
+        $req->execute();
+        
+        $uneLigne = $req->fetch(PDO::FETCH_OBJ);
+        
+        if ( !$uneLigne) { return false; }
+        
+        $lesTraces = array();
+        
+        while($uneLigne){
+        
+            $unID = utf8_encode($uneLigne->id);
+            $uneDateHeureDebut = utf8_encode($uneLigne->dateDebut);
+            $uneDateHeureFin = utf8_encode($uneLigne->dateFin);
+            $terminee = utf8_encode($uneLigne->terminee);
+            $unIdUtilisateur = utf8_encode($uneLigne->idUtilisateur);
+            
+            $trace = new Trace($unID, $uneDateHeureDebut, $uneDateHeureFin, $terminee, $unIdUtilisateur);
+            
+            $trace->setLesPointsDeTrace($this->getLesPointsDeTrace($unID));
+            
+            
+            foreach ($this->getLesPointsDeTrace($unID) as $pdt)
+            {
+                $trace->ajouterPoint($pdt);
+            }
+            
+            $lesTraces[] = $trace;
+            
+            $uneLigne = $req->fetch(PDO::FETCH_OBJ);
+        
+        }
+        
+        
+        return $lesTraces;
+    }
+    
+    
+    
+    public function getLesTraces($idUtilisateur)
+    {
+        // préparation de la requête de recherche des autorisations
+        $txt_req = "SELECT * FROM `tracegps_vue_traces`";
+        $txt_req .= " WHERE `idUtilisateur` = :idUtilisateur";
+        $req = $this->cnx->prepare($txt_req);
+        // liaison de la requête et de ses paramètres
+        $req->bindValue("idUtilisateur", utf8_encode($idUtilisateur), PDO::PARAM_INT);
+        
+        // exécution de la requête
+        $req->execute();
+        
+        $uneLigne = $req->fetch(PDO::FETCH_OBJ);
+        
+        if ( !$uneLigne) { return false; }
+        
+        $lesTraces = array();
+        
+        
+        while ($uneLigne) 
+        {
+            $trace = $this->getUneTrace(utf8_encode($uneLigne->id));
+            
+            $lesTraces[] = $trace;
+            
+            $uneLigne = $req->fetch(PDO::FETCH_OBJ);
+        }
+        
+        return $lesTraces;
+
+    }
+    
+    
+    
+    public function getLesTracesAutorisees($idUtilisateur)
+    {
+        
+        // préparation de la requête de recherche des autorisations
+        $txt_req = "SELECT * from tracegps_vue_traces";
+        $txt_req .= " WHERE idUtilisateur IN (SELECT idAutorisant from tracegps_autorisations where idAutorise = :idUtilisateur)";
+        $txt_req .= " OR idUtilisateur = :idUtilisateur";
+        $req = $this->cnx->prepare($txt_req);
+        // liaison de la requête et de ses paramètres
+        $req->bindValue("idUtilisateur", utf8_encode($idUtilisateur), PDO::PARAM_INT);
+        
+        // exécution de la requête
+        $req->execute();
+        
+        $uneLigne = $req->fetch(PDO::FETCH_OBJ);
+        
+        if ( !$uneLigne) { return false; }
+        
+        $lesTraces = array();
+        
+        
+        while ($uneLigne)
+        {
+            $trace = $this->getUneTrace(utf8_encode($uneLigne->id));
+            
+            $lesTraces[] = $trace;
+            
+            $uneLigne = $req->fetch(PDO::FETCH_OBJ);
+        }
+        
+        return $lesTraces;
+        
+        
+    }
     
     
     
     
-    
-    
-    
-    
-    
-    
-    
-    
+    public function creerUneTrace($uneTrace)
+    {
+        
+    }
     
     
     

@@ -151,13 +151,17 @@ class Trace
     
     public function getDureeEnSecondes()
     {
-        if($this->getNombrePoints() > 0)
+        if($this->getNombrePoints() > 1)
         {
             $first = ($this->lesPointsDeTrace[0])->getTempsCumule();
             $indexMax = $this->getNombrePoints() -1;
             $last = ($this->lesPointsDeTrace[$indexMax])->getTempsCumule();
             $diff = $last - $first;
             return $diff;
+        }
+        elseif ($this->getNombrePoints() == 1)
+        {
+            return $this->lesPointsDeTrace[0]->getTempsCumule();
         }
         return 0;
     }
