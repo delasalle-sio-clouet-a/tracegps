@@ -621,18 +621,31 @@ class DAO
     public function getUneTrace($idTrace)
     {
         // préparation de la requête de recherche des autorisations
-        $txt_req = "SELECT idTrace FROM `tracegps_points`";
-        $txt_req .= " WHERE idTrace = :idTrace";
+        $txt_req = "SELECT * FROM `tracegps_vue_traces`";
+        $txt_req .= " WHERE id = :idTrace";
         $req = $this->cnx->prepare($txt_req);
         // liaison de la requête et de ses paramètres
         $req->bindValue("idTrace", utf8_encode($idTrace), PDO::PARAM_STR);
-        $req->bindValue("idAutorisant", utf8_encode($idAutorisant), PDO::PARAM_STR);
+
         // exécution de la requête
         $req->execute();
         
-        if ( !$req) { return false; }
         
-        return ;
+        $uneLigne = $req->fetch(PDO::FETCH_OBJ);
+        
+        if ( !$uneLigne) { return false; }
+
+        $unID = utf8_encode($uneLigne->id);
+        $uneDateHeureDebut = utf8_encode($uneLigne->dateDebut);
+        $uneDateHeureFin = utf8_encode($uneLigne->dateFin);
+        $terminee = utf8_encode($uneLigne->terminee);
+        $unIdUtilisateur = utf8_encode($uneLigne->idUtilisateur);
+        
+        $trace = new Trace($unID, $uneDateHeureDebut, $uneDateHeureFin, $terminee, $unIdUtilisateur);
+        
+        $trace->setLesPointsDeTrace($this->getLesPointsDeTrace($idTrace));
+        
+        return $trace;
         
         
     }
