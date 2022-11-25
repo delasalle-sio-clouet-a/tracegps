@@ -779,6 +779,33 @@ class DAO
     
     public function creerUneTrace($uneTrace)
     {
+        $txt_req = "INSERT INTO `tracegps_trace` (`dateDebut`, `dateFin`, `terminee`, `idUtilisateur`)";
+        $txt_req .= " values (:dateDebut,:dateFin,:terminee,:idUtilisateur)";
+        $req = $this->cnx->prepare($txt_req);
+        // liaison de la requête et de ses paramètres
+        //$req->bindValue("id", utf8_encode($uneTrace->getId()), PDO::PARAM_INT);
+        $req->bindValue("dateDebut", utf8_encode($uneTrace->getDateHeureDebut()), PDO::PARAM_STR);
+        /*
+        if(utf8_encode($uneTrace->getDateHeureFin()) == NULL)
+        {
+            $req->bindValue("dateFin",PDO::PARAM_NULL);;
+        }
+        else 
+        {
+            $req->bindValue("dateFin", utf8_encode($uneTrace->getDateHeureFin()), PDO::PARAM_STR);
+        }
+        */
+        $req->bindValue("dateFin", utf8_encode($uneTrace->getDateHeureFin()), PDO::PARAM_STR);
+        
+        $req->bindValue("terminee", utf8_encode($uneTrace->getTerminee()), PDO::PARAM_BOOL);
+        $req->bindValue("idUtilisateur", utf8_encode($uneTrace->getIdUtilisateur()), PDO::PARAM_INT);
+ 
+        // exécution de la requête
+        $ok = $req->execute();
+
+        if ( !$ok) { return false; }
+        
+        return true;
         
     }
     
