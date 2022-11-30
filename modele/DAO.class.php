@@ -788,7 +788,7 @@ class DAO
         
         if($uneTrace->getDateHeureFin() == NULL)
         {
-            $req->bindValue(":dateFin",PDO::PARAM_NULL);
+            $req->bindValue(":dateFin", NULL);
         }
         else 
         {
