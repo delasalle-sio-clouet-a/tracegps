@@ -1,9 +1,9 @@
 <?php
 // Projet TraceGPS - services web
-// fichier :  api/services/GetLesUtilisateursQueJautorise.php
+// fichier :  api/services/GetLesUtilisateursQuiMautorisent.php
 // Dernière mise à jour : 30/11/2022 par Erwan
 
-// Rôle : ce service web permet à un utilisateur d'obtenir la liste des utilisateurs qu'il autorise à consulter ses parcours.
+// Rôle : ce service web permet à un utilisateur d'obtenir la liste des utilisateurs qui l'autorisent à consulter leurs parcours.
 // Le service web doit recevoir 3 paramètres :
 //     pseudo : le pseudo de l'utilisateur
 //     mdpSha1 : le mot de passe de l'utilisateur hashé en sha1
@@ -21,9 +21,9 @@ $pseudo = ( empty($this->request['pseudo'])) ? "" : $this->request['pseudo'];
 $mdpSha1 = ( empty($this->request['mdp'])) ? "" : $this->request['mdp'];
 $lang = ( empty($this->request['lang'])) ? "" : $this->request['lang'];
 
-// initialisation du nombre de réponses
-$nombreAutorisations = 0;
-$lesUtilisateurs = array();
+// initialisation du nombre de réponses 
+$nombreAutorisations = 0; 
+$lesUtilisateurs = array(); 
 
 
 // "xml" par défaut si le paramètre lang est absent ou incorrect
@@ -31,10 +31,10 @@ if ($lang != "json") $lang = "xml";
 
 // La méthode HTTP utilisée doit être GET
 if ($this->getMethodeRequete() != "GET")
-    {	$msg = "Erreur : méthode HTTP incorrecte.";
-        $code_reponse = 406;
-    }
-else 
+{	$msg = "Erreur : méthode HTTP incorrecte.";
+$code_reponse = 406;
+}
+else
 {
     // Les paramètres doivent être présents
     if ($pseudo=="" || $mdpSha1 =="")
@@ -44,132 +44,133 @@ else
     }
     else
     {
-        // Si authentification incorrecte ex : mot de passe incorrect, on en informe l'utilisateur
+        // test de l'authentification de l'utilisateur
+        // la méthode getNiveauConnexion de la classe DAO retourne les valeurs 0 (non identifié) ou 1 (utilisateur) ou 2 (administrateur)
         $niveauConnexion = $dao->getNiveauConnexion($pseudo, $mdpSha1);
-        if ($niveauConnexion == 0) {
-            $msg = "Erreur : authentification incorrecte";
-            $code_reponse = 401; 
+        if ( $niveauConnexion == 0 )
+        {  $msg = "Erreur : authentification incorrecte.";
+        $code_reponse = 401;
+        
         }
-        else 
+        else
         {
             //On va d'aord chercher l'id de l'utilisateur correspondant au pseudo
             $utilisateur = $dao->getUnUtilisateur($pseudo);
             $id = $utilisateur->getId();
             //echo "Ceci est un test de l'id : ".$id;
             // on va chercher la liste des autorisations
-            $lesUtilisateurs = $dao->getLesUtilisateursAutorises($id);
+            $lesUtilisateurs = $dao->getLesUtilisateursAutorisant($id);
             //On compte le nombre d'autorisations
             $nombreAutorisations = sizeof($lesUtilisateurs);
             //On peut enfin construire le message, bien sûr selon le nombre d'autorisations que l'on trouve ci dessus !
             if($nombreAutorisations == 0)
             {
-                $msg = "Aucune autorisation accordée par ".$pseudo. ".";
-                $code_reponse = 200; 
+                $msg = "Aucune autorisation accordée à".$pseudo. ".";
+                $code_reponse = 200;
             }
-            else 
+            else
             {
-                $msg = $nombreAutorisations." autorisations accordées par ".$pseudo.".";
-                $code_reponse = 200; 
+                $msg = $nombreAutorisations." autorisation(s) accordée(s) à ".$pseudo.".";
+                $code_reponse = 200;
             }
-        
+            
         }
     }
 }
 
-//ferme la connexion à MySQL 
+//ferme la connexion à MySQL
 unset($dao);
 
 //création du flux en sortie
 if($lang=="xml") {
-    $content_type = "application/xml; charset=utf-8"; //indique le format XML pour la réponse 
+    $content_type = "application/xml; charset=utf-8"; //indique le format XML pour la réponse
     $donnees = creerFluxXML($msg, $lesUtilisateurs);
 }
 else {
-    $content_type = "application/json; charset=utf-8"; //indique le format JSon pour la réponse 
+    $content_type = "application/json; charset=utf-8"; //indique le format JSon pour la réponse
     $donnees = creerFluxJSON($msg, $lesUtilisateurs);
     
 }
 
-//envoi de la réponse HTTP 
-$this->envoyerReponse($code_reponse, $content_type, $donnees); 
+//envoi de la réponse HTTP
+$this->envoyerReponse($code_reponse, $content_type, $donnees);
 
-//fin du programme pour ne pas enchainer sur les 2 fonctions qui suivent 
-exit; 
+//fin du programme pour ne pas enchainer sur les 2 fonctions qui suivent
+exit;
 
 // =======================================================================================================================
-
-//creation du flux XML en sortie 
+//creation du flux XML en sortie
 function creerFluxXML($msg, $lesUtilisateurs)
 {
-  // créé une instance de DOMDocument (Document Object Modele)
-  $doc = new DOMDocument(); 
-  
-  // spécifie la version et le type d'encodage 
-  $doc->version ='1.0'; 
-  $doc->encoding ='utf-8';
-  
-  //créé un commentaire et l'encode en UTF-8
-  $elt_commentaire = $doc->createComment('Service web GetLesUtilisateursQueJautorise.php - BTS SIO - Lycée De La Salle - Rennes');
-  
-  // place ce commentaire à la racine du document XML
-  $doc->appendChild($elt_commentaire);
-  
-  // crée l'élément 'data' à la racine du document XML
-  $elt_data = $doc->createElement('data');
-  $doc->appendChild($elt_data);
-  
-  // place l'élément 'reponse' juste dans l'élément 'data'
-  $elt_reponse = $doc->createElement('reponse', $msg);
-  $elt_data->appendChild($elt_reponse);
-  
-  //traitement des utilisateurs
-  // s'il y en a 
-  if (sizeof($lesUtilisateurs) > 0) {
-     // place l'element "donnees" dans l'element data 
-      $elt_donnees = $doc->createElement('donnees');
-      $elt_data->appendChild($elt_donnees );
-      
-      // place l'élément 'lesUtilisateurs' dans l'élément 'donnees'
-      $elt_lesUtilisateurs = $doc->createElement('lesUtilisateurs');
-      $elt_donnees->appendChild($elt_lesUtilisateurs);
-      foreach ($lesUtilisateurs as $unUtilisateur)
-       {
-      // crée un élément vide 'utilisateur'
-      $elt_utilisateur = $doc->createElement('utilisateur');
-      // place l'élément 'utilisateur' dans l'élément 'lesUtilisateurs'
-      $elt_lesUtilisateurs->appendChild($elt_utilisateur);
-      
-    // crée les éléments enfants de l'élément 'utilisateur'
-    $elt_id  = $doc->createElement('id', $unUtilisateur->getId());
-
-    $elt_utilisateur->appendChild($elt_id);
-
-    $elt_pseudo     = $doc->createElement('pseudo', $unUtilisateur->getPseudo());
-
-    $elt_utilisateur->appendChild($elt_pseudo);
-    $elt_adrMail    = $doc->createElement('adrMail', $unUtilisateur->getAdrMail());
-    $elt_utilisateur->appendChild($elt_adrMail);
-    $elt_numTel     = $doc->createElement('numTel', $unUtilisateur->getNumTel());
-    $elt_utilisateur->appendChild($elt_numTel);
-    $elt_niveau     = $doc->createElement('niveau', $unUtilisateur->getNiveau());
-    $elt_utilisateur->appendChild($elt_niveau);
-    $elt_dateCreation = $doc->createElement('dateCreation', $unUtilisateur->getDateCreation());
-    $elt_utilisateur->appendChild($elt_dateCreation);
-    $elt_nbTraces   = $doc->createElement('nbTraces', $unUtilisateur->getNbTraces());
-    $elt_utilisateur->appendChild($elt_nbTraces);
+    // créé une instance de DOMDocument (Document Object Modele)
+    $doc = new DOMDocument();
     
-    if ($unUtilisateur->getNbTraces() > 0)
-     {  $elt_dateDerniereTrace = $doc->createElement('dateDerniereTrace', $unUtilisateur->getDateDerniereTrace());
-        $elt_utilisateur->appendChild($elt_dateDerniereTrace);
-     }
-   }
-
- }
-
-// Mise en forme finale
-$doc->formatOutput = true;
-// renvoie le contenu XML
-return $doc->saveXML();
+    // spécifie la version et le type d'encodage
+    $doc->version ='1.0';
+    $doc->encoding ='utf-8';
+    
+    //créé un commentaire et l'encode en UTF-8
+    $elt_commentaire = $doc->createComment('Service web GetLesUtilisateursQuiMautorisent.php - BTS SIO - Lycée De La Salle - Rennes');
+    
+    // place ce commentaire à la racine du document XML
+    $doc->appendChild($elt_commentaire);
+    
+    // crée l'élément 'data' à la racine du document XML
+    $elt_data = $doc->createElement('data');
+    $doc->appendChild($elt_data);
+    
+    // place l'élément 'reponse' juste dans l'élément 'data'
+    $elt_reponse = $doc->createElement('reponse', $msg);
+    $elt_data->appendChild($elt_reponse);
+    
+    //traitement des utilisateurs
+    // s'il y en a
+    if (sizeof($lesUtilisateurs)  <0) {
+        // place l'element "donnees" dans l'element data
+        $elt_donnees = $doc->createElement('donnees');
+        $elt_data->appendChild($elt_donnees );
+        
+        // place l'élément 'lesUtilisateurs' dans l'élément 'donnees'
+        $elt_lesUtilisateurs = $doc->createElement('lesUtilisateurs');
+        $elt_donnees->appendChild($elt_lesUtilisateurs);
+        foreach ($lesUtilisateurs as $unUtilisateur)
+        {
+            // crée un élément vide 'utilisateur'
+            $elt_utilisateur = $doc->createElement('utilisateur');
+            // place l'élément 'utilisateur' dans l'élément 'lesUtilisateurs'
+            $elt_lesUtilisateurs->appendChild($elt_utilisateur);
+            
+            // crée les éléments enfants de l'élément 'utilisateur'
+            $elt_id  = $doc->createElement('id', $unUtilisateur->getId());
+            
+            $elt_utilisateur->appendChild($elt_id);
+            
+            $elt_pseudo     = $doc->createElement('pseudo', $unUtilisateur->getPseudo());
+            
+            $elt_utilisateur->appendChild($elt_pseudo);
+            $elt_adrMail    = $doc->createElement('adrMail', $unUtilisateur->getAdrMail());
+            $elt_utilisateur->appendChild($elt_adrMail);
+            $elt_numTel     = $doc->createElement('numTel', $unUtilisateur->getNumTel());
+            $elt_utilisateur->appendChild($elt_numTel);
+            $elt_niveau     = $doc->createElement('niveau', $unUtilisateur->getNiveau());
+            $elt_utilisateur->appendChild($elt_niveau);
+            $elt_dateCreation = $doc->createElement('dateCreation', $unUtilisateur->getDateCreation());
+            $elt_utilisateur->appendChild($elt_dateCreation);
+            $elt_nbTraces   = $doc->createElement('nbTraces', $unUtilisateur->getNbTraces());
+            $elt_utilisateur->appendChild($elt_nbTraces);
+            
+            if ($unUtilisateur->getNbTraces() > 0)
+            {  $elt_dateDerniereTrace = $doc->createElement('dateDerniereTrace', $unUtilisateur->getDateDerniereTrace());
+            $elt_utilisateur->appendChild($elt_dateDerniereTrace);
+            }
+        }
+        
+    }
+    
+    // Mise en forme finale
+    $doc->formatOutput = true;
+    // renvoie le contenu XML
+    return $doc->saveXML();
 }
 
 // ================================================================================================
