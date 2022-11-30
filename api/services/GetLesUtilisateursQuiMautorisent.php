@@ -125,7 +125,7 @@ function creerFluxXML($msg, $lesUtilisateurs)
     
     //traitement des utilisateurs
     // s'il y en a
-    if (sizeof($lesUtilisateurs)  <0) {
+    if (sizeof($lesUtilisateurs)  < 0) {
         // place l'element "donnees" dans l'element data
         $elt_donnees = $doc->createElement('donnees');
         $elt_data->appendChild($elt_donnees );
