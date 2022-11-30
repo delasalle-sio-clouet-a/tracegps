@@ -1,13 +1,11 @@
 <?php
 // Projet TraceGPS - services web
 // fichier :  api/services/DemanderMDP.php
-// Dernière mise à jour : 22/11/2022 par Erwan 
+// Dernière mise à jour : 30/11/2022 par Erwan 
 
-// Rôle : ce service permet à un utilisateur de se créer un compte
-// Le service web doit recevoir 4 paramètres :
+// Rôle : ce service web permet à un utilisateur de demander un nouveau mot de passe s'il l'a oublié.
+// Le service web doit recevoir 2 paramètres :
 //     pseudo : le pseudo de l'utilisateur
-//     adrMail : son adresse mail
-//     numTel : son numéro de téléphone
 //     lang : le langage du flux de données retourné ("xml" ou "json") ; "xml" par défaut si le paramètre est absent ou incorrect
 // Le service retourne un flux de données XML ou JSON contenant un compte-rendu d'exécution
 
