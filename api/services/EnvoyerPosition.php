@@ -41,76 +41,80 @@ $lang = ( empty($this->request['lang'])) ? "" : $this->request['lang'];
         $msg = "Erreur : données incomplètes.";
         $code_reponse = 200;
     }
-    else if ($dao->getUnUtilisateur($pseudo) == null || $dao->getUnUtilisateur($pseudo)->getMdpSha1() != $mdp)
+    else 
     {
-        $msg = "Erreur : authentification incorrecte.";
-        $code_reponse = 200;
-    }
-    else
-    {
-
-        if(!$dao->getUneTrace($idTrace))
+        if ($dao->getUnUtilisateur($pseudo) == null || $dao->getUnUtilisateur($pseudo)->getMdpSha1() != $mdp)
         {
-            $msg = "Erreur : le numéro de trace n'existe pas.";
+            $msg = "Erreur : authentification incorrecte.";
             $code_reponse = 200;
         }
-        else 
+        else
         {
-            $userId = $dao->getUnUtilisateur($pseudo)->getId();
-            if (!$dao->getLesTraces($userId)) {
-                $msg = "Erreur : le numéro de trace ne correspond pas à cet utilisateur.";
+            
+            if(!$dao->getUneTrace($idTrace))
+            {
+                $msg = "Erreur : le numéro de trace n'existe pas.";
                 $code_reponse = 200;
-                
             }
             else
             {
-                $ok = false;
-                $curTrace = null;
-                foreach ($dao->getLesTraces($userId) as $trace)
-                {
-                    if($trace->getId() == $idTrace)
-                    {
-                        $curTrace = $trace;
-                        $ok = true;
-                    }
-                    
-                }
-                if(!$ok)
-                {
+                $userId = $dao->getUnUtilisateur($pseudo)->getId();
+                if (!$dao->getLesTraces($userId)) {
                     $msg = "Erreur : le numéro de trace ne correspond pas à cet utilisateur.";
                     $code_reponse = 200;
+                    
                 }
-                else 
+                else
                 {
-                    if($curTrace->getTerminee())
+                    $ok = false;
+                    $curTrace = null;
+                    foreach ($dao->getLesTraces($userId) as $trace)
                     {
-                        $msg = "Erreur : la trace est déjà terminée.";
-                        $code_reponse = 200;
-
-                    }
-                    else 
-                    {
-                        
-                        
-                        $pointId =  $curTrace->getNombrePoints();
-                        $pdt = new PointDeTrace($idTrace, $pointId, $latitude, $longitude, $altitude, $dateHeure, $rythmeCardio, 0, 0, 0);
-                        if(!$dao->creerUnPointDeTrace($pdt))
+                        if($trace->getId() == $idTrace)
                         {
-                            $msg = "Erreur : problème lors de l'enregistrement du point.";
+                            $curTrace = $trace;
+                            $ok = true;
+                        }
+                        
+                    }
+                    if(!$ok)
+                    {
+                        $msg = "Erreur : le numéro de trace ne correspond pas à cet utilisateur.";
+                        $code_reponse = 200;
+                    }
+                    else
+                    {
+                        if($curTrace->getTerminee())
+                        {
+                            $msg = "Erreur : la trace est déjà terminée.";
                             $code_reponse = 200;
-
+                            
                         }
                         else
                         {
-                            $donnee = $pointId;
+                            
+                            
+                            $pointId =  $curTrace->getNombrePoints();
+                            $pdt = new PointDeTrace($idTrace, $pointId, $latitude, $longitude, $altitude, $dateHeure, $rythmeCardio, 0, 0, 0);
+                            if(!$dao->creerUnPointDeTrace($pdt))
+                            {
+                                $msg = "Erreur : problème lors de l'enregistrement du point.";
+                                $code_reponse = 200;
+                                
+                            }
+                            else
+                            {
+                                $donnee = $pointId;
+                            }
+                            
                         }
-                        
                     }
+                    
+                    
                 }
-
-
             }
-        }
+    }
+   
 }
     
     
