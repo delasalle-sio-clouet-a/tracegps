@@ -32,7 +32,6 @@ $rythmeCardio  = ( empty($this->request['rythmeCardio'])) ? "" : $this->request[
 $lang = ( empty($this->request['lang'])) ? "" : $this->request['lang'];
 
 
-    
     $donnee = "";
     // "xml" par défaut si le paramètre lang est absent ou incorrect
     if ($lang != "json") $lang = "xml";
@@ -40,26 +39,27 @@ $lang = ( empty($this->request['lang'])) ? "" : $this->request['lang'];
     // Les paramètres doivent être présents
     if ($pseudo == "" || $mdp == "" || $idTrace == "" || $dateHeure == "" || $rythmeCardio == "" || $latitude == "" || $longitude == "" || $altitude == "") {
         $msg = "Erreur : données incomplètes.";
-        $code_reponse = 400;
+        $code_reponse = 200;
     }
     else if ($dao->getUnUtilisateur($pseudo) == null || $dao->getUnUtilisateur($pseudo)->getMdpSha1() != $mdp)
     {
         $msg = "Erreur : authentification incorrecte.";
-        $code_reponse = 400;
+        $code_reponse = 200;
     }
-    else{
+    else
+    {
 
         if(!$dao->getUneTrace($idTrace))
         {
             $msg = "Erreur : le numéro de trace n'existe pas.";
-            $code_reponse = 400;
+            $code_reponse = 200;
         }
         else 
         {
             $userId = $dao->getUnUtilisateur($pseudo)->getId();
             if (!$dao->getLesTraces($userId)) {
                 $msg = "Erreur : le numéro de trace ne correspond pas à cet utilisateur.";
-                $code_reponse = 400;
+                $code_reponse = 200;
                 
             }
             else
@@ -78,36 +78,40 @@ $lang = ( empty($this->request['lang'])) ? "" : $this->request['lang'];
                 if(!$ok)
                 {
                     $msg = "Erreur : le numéro de trace ne correspond pas à cet utilisateur.";
-                    $code_reponse = 400;
+                    $code_reponse = 200;
                 }
                 else 
                 {
                     if($curTrace->getTerminee())
                     {
                         $msg = "Erreur : la trace est déjà terminée.";
-                        $code_reponse = 400;
+                        $code_reponse = 200;
 
                     }
                     else 
                     {
                         
                         
-                        $pointId =  $curTrace->getNombrePoints()+1;
+                        $pointId =  $curTrace->getNombrePoints();
                         $pdt = new PointDeTrace($idTrace, $pointId, $latitude, $longitude, $altitude, $dateHeure, $rythmeCardio, 0, 0, 0);
                         if(!$dao->creerUnPointDeTrace($pdt))
                         {
                             $msg = "Erreur : problème lors de l'enregistrement du point.";
-                            $code_reponse = 400;
+                            $code_reponse = 200;
 
                         }
+                        else
+                        {
+                            $donnee = $pointId;
+                        }
+                        
                     }
                 }
-            
-        }
-        
 
-    } 
-    }
+
+            }
+        }
+}
     
     
     // ferme la connexion à MySQL :
@@ -168,10 +172,20 @@ function creerFluxXML($msg,$donnee)
     // place l'élément 'reponse' juste après l'élément 'data'
     $elt_reponse = $doc->createElement('reponse', $msg);
     $elt_data->appendChild($elt_reponse);
-    
-    $elt_donnee = $doc->createElement('donnees', $donnee);
-    $elt_data->appendChild($elt_donnee);
-    
+    if($donnee == "")
+    {
+        $elt_donnee = $doc->createElement('donnees', $donnee);
+        $elt_data->appendChild($elt_donnee);
+        
+    }
+    else 
+    {
+        $elt_donnee = $doc->createElement('donnees');
+        $elt_data->appendChild($elt_donnee);
+        $elt_id = $doc->createElement('id',$donnee);
+        $elt_donnee->appendChild($elt_id);
+    }
+
     // Mise en forme finale
     $doc->formatOutput = true;
     
