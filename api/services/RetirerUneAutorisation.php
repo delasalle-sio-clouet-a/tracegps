@@ -1,7 +1,7 @@
 <?php
 // Projet TraceGPS - services web
 // fichier :  api/services/RetirerUneAutorisation.php
-// Dernière mise à jour : 06/12/2022 par Erwan
+// Dernière mise à jour : 07/12/2022 par Erwan
 
 // Rôle : ce service web permet à un utilisateur de supprimer une autorisation qu'il avait accordée à un autre utilisateur. 
 // Le service web doit recevoir 5 paramètres :
