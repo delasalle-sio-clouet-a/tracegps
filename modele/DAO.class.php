@@ -531,8 +531,8 @@ class DAO
         $req = $this->cnx->prepare($txt_req);
         
         // liaison de la requête et de ses paramètres
-        $req->bindValue("idAutorise", utf8_encode($idAutorise), PDO::PARAM_STR);
-        $req->bindValue("idAutorisant", utf8_encode($idAutorisant), PDO::PARAM_STR);
+        $req->bindValue("idAutorise", utf8_encode($idAutorise), PDO::PARAM_INT);
+        $req->bindValue("idAutorisant", utf8_encode($idAutorisant), PDO::PARAM_INT);
         // exécution de la requête
         $ok = $req->execute();
         // sortir en cas d'échec

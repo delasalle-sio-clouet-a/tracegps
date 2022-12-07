@@ -12,7 +12,7 @@
 //lang : le langage utilisé pour le flux de données ("xml" ou "json")
 // Le service retourne un flux de données XML ou JSON contenant un compte-rendu d'exécution
 // Les paramètres doivent être passés par la méthode GET :
-//     http://<hébergeur>/tracegps/api/SupprimerUneAutorisation 
+//     http://<hébergeur>/tracegps/api/RetirerUneAutorisation 
 
 // ces variables globales sont définies dans le fichier modele/parametres.php (nécéssaire pour le mail) 
 global $ADR_MAIL_EMETTEUR, $ADR_SERVICE_WEB;
@@ -31,8 +31,8 @@ $lang = ( empty($this->request['lang'])) ? "" : $this->request['lang'];
 if ($lang != "json") $lang = "xml";
 
 
-// Les paramètres doivent être présents 
-if ($pseudo == "" || $mdp == "" || $pseudoARetirer == "" || $texteMessage == "" )
+// Les paramètres doivent être présents sauf le $texteMessage qui peut être vide 
+if ($pseudo == "" || $mdp == "" || $pseudoARetirer == "")
 {
     $msg = "Erreur : données incomplètes";
     $code_reponse = 400;
@@ -45,6 +45,8 @@ else
         $msg = "Erreur : authentification incorrecte";
         $code_reponse = 401;
     }
+    else
+    {
     // Vérification de l'existence du pseudo de l'utilisateur à qui on désire supprimer l'autorisation
     $ok = $dao->existePseudoUtilisateur($pseudoARetirer);
     if (! $ok)
@@ -52,71 +54,76 @@ else
         $msg = "Erreur : pseudo utilisateur inexistant.";
         $code_reponse = 400;
     }
-    
-    // Vérification que l'autorisation à supprimer existe bien 
-    //Pour ce faire on récupère l'id de l'utilisateur actuellement connecté et l'id de l'utilisateur auquel on souhaite supprimer l'autorisation 
-    $utilisateurConnecte = $dao->getUnUtilisateur($pseudo); // D'abord on va chercher l'utilisateur correspondand au pseudo 
-    $idUtilisateurConnecte = $utilisateurConnecte->getId(); 
-    $utilisateurSuprAutorisation = $dao->getUnUtilisateur($pseudoARetirer); 
-    $idUtilisateurSuprAutorisation = $utilisateurSuprAutorisation->getId(); 
-    
-    //Maintenant on peut procéder à la vérification ! 
-    $ok = $dao->autoriseAConsulter($idUtilisateurConnecte, $idUtilisateurSuprAutorisation); 
-    if ($ok == false)
+    else
     {
-            $msg = "Erreur : l'autorisation n'était pas accordée.";
-            $code_reponse = 400;
-    }
-    //Une fois que tout est bon, on peut supprimer l'autorisation 
-    else 
-    {// s'il n'y a pas de message de saisi, on supprime l'autorisation sans envoyer de mail 
-        if ($texteMessage == "")
+        // Vérification que l'autorisation à supprimer existe bien 
+        //Pour ce faire on récupère l'id de l'utilisateur actuellement connecté et l'id de l'utilisateur auquel on souhaite supprimer l'autorisation 
+        $utilisateurConnecte = $dao->getUnUtilisateur($pseudo); // D'abord on va chercher l'utilisateur correspondand au pseudo 
+        $idUtilisateurConnecte = $utilisateurConnecte->getId(); 
+        $utilisateurSuprAutorisation = $dao->getUnUtilisateur($pseudoARetirer); 
+        $idUtilisateurSuprAutorisation = $utilisateurSuprAutorisation->getId(); 
+        
+        //Maintenant on peut procéder à la vérification ! 
+        $ok = $dao->autoriseAConsulter($idUtilisateurConnecte, $idUtilisateurSuprAutorisation); 
+        if ($ok == false)
         {
-            $ok2 = $dao->supprimerUneAutorisation($pseudo, $pseudoARetirer);
-            if ( ! $ok2 )
-            {
-                $msg ="Erreur : problème lors de la suppression de l'autorisation."; 
-                $code_reponse = 500; 
-            }
-            else
-            {
-                $msg ="Autorisation supprimée."; 
-            }
-            
+                $msg = "Erreur : l'autorisation n'était pas accordée.";
+                $code_reponse = 400;
         }
-           else 
-           {
-             // Si il y a un message de saisi on envoie un email
-               $ok3 = $dao->supprimerUneAutorisation($pseudo, $pseudoARetirer);
-               if (  ! $ok3 )
-               {
+        //Une fois que tout est bon, on peut supprimer l'autorisation 
+        else 
+        {
+            // s'il n'y a pas de message de saisi, on supprime l'autorisation sans envoyer de mail 
+            if ($texteMessage == "")
+            {
+                $ok2 = $dao->supprimerUneAutorisation($idUtilisateurConnecte, $idUtilisateurSuprAutorisation);
+                if ( ! $ok2 )
+                {
+                    $msg ="Erreur : problème lors de la suppression de l'autorisation."; 
+                    $code_reponse = 500; 
+                }
+                else
+                {
+                    $msg ="Autorisation supprimée.";
+                    $code_reponse = 200; 
+                }
+    
+            }
+            else 
+            {
+                // Si il y a un message de saisi on envoie un email
+                $ok3 = $dao->supprimerUneAutorisation($idUtilisateurConnecte, $idUtilisateurSuprAutorisation);
+                if (  ! $ok3 )
+                {
                    $msg ="Erreur : problème lors de la suppression de l'autorisation.";
                    $code_reponse = 500;
-               }
-               else 
-               {
-                   //pour commencer on récupère l'adresse mail de l'utilisateur auquel on supprime l'autorisation 
-                   $adrMailUtilisateurSuprAutorisation = $utilisateurSuprAutorisation->getAdrMail();
-                   //Ensuite on peut construire et envoyer le mail. 
-                   $sujetMail = "Suppression d'autorisation de la part d'un utilisateur du système TraceGPS";
-                   $contenuMail = "Cher ou chère " . $pseudoARetirer . "\n\n";
-                   $contenuMail .= "L'utilisateur ".$pseudo." du système TraceGPS vous retire l'autorisation de suivre ses parcours \n\n";
-                   $contenuMail .= "Son Message : ".$texteMessage."\n\n";
-                   $contenuMail .= "Cordialement. \n"; 
-                   $contenuMail .= "L'administrateur du système TraceGPS";
-                   $ok = Outils::envoyerMail($adrMailUtilisateurSuprAutorisation, $sujetMail, $contenuMail, $ADR_MAIL_EMETTEUR);
-                   if ( ! $ok ) {
-                       $message = "Erreur : l'envoi du courriel au demandeur a rencontré un problème.";
-                       $code_reponse = 500;
+                }
+                else 
+                {
+                       //pour commencer on récupère l'adresse mail de l'utilisateur auquel on supprime l'autorisation 
+                       $adrMailUtilisateurSuprAutorisation = $utilisateurSuprAutorisation->getAdrMail();
+                       //Ensuite on peut construire et envoyer le mail. 
+                       $sujetMail = "Suppression d'autorisation de la part d'un utilisateur du système TraceGPS";
+                       $contenuMail = "Cher ou chère " . $pseudoARetirer . "\n\n";
+                       $contenuMail .= "L'utilisateur ".$pseudo." du système TraceGPS vous retire l'autorisation de suivre ses parcours \n\n";
+                       $contenuMail .= "Son Message : ".$texteMessage."\n\n";
+                       $contenuMail .= "Cordialement. \n"; 
+                       $contenuMail .= "L'administrateur du système TraceGPS";
+                       $ok = Outils::envoyerMail($adrMailUtilisateurSuprAutorisation, $sujetMail, $contenuMail, $ADR_MAIL_EMETTEUR);
+                       if ( ! $ok ) {
+                           $msg = "Erreur : l'envoi du courriel au demandeur a rencontré un problème.";
+                           $code_reponse = 500;
+                       }
+                       else {
+                           $msg = "Autorisation supprimée ; ".$pseudoARetirer." va recevoir un courriel de notification.";
+                           $code_reponse = 200;
+                       }
                    }
-                   else {
-                       $message = "Autorisation supprimée ; ".$pseudoARetirer." va recevoir un courriel de notification.";
-                       $code_reponse = 200;
-                   }
                }
-           }
+            }
         }
     }
+}
     unset($dao);   // ferme la connexion à MySQL
     
     //création du flux en sortie
@@ -147,7 +154,7 @@ else
         $doc->encoding = 'UTF-8';
         
         // crée un commentaire et l'encode en UTF-8
-        $elt_commentaire = $doc->createComment('Service web DemanderUneAutorisation - BTS SIO - Lycée De La Salle - Rennes');
+        $elt_commentaire = $doc->createComment('Service web RetirerUneAutorisation - BTS SIO - Lycée De La Salle - Rennes');
         // place ce commentaire à la racine du document XML
         $doc->appendChild($elt_commentaire);
         
@@ -192,23 +199,4 @@ else
     }
     
     // ================================================================================================
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ?>
