@@ -39,7 +39,7 @@ if ($this->getMethodeRequete() != "GET")
 }
 else {
     // Vérification que les paramètres sont présents
-    if ($pseudo == "" && $mdp == "" && $pseudoDestinataire == "" && $texteMessage == "" && $nomPrenom == "")
+    if ($pseudo == "" || $mdp == "" || $pseudoDestinataire == "" || $texteMessage == "" || $nomPrenom == "")
     {
         $msg = "Erreur : données incomplètes";
         $code_reponse = 400;

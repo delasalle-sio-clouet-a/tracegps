@@ -469,12 +469,12 @@ class DAO
     public function autoriseAConsulter($idAutorisant, $idAutorise)
     {
         // préparation de la requête de recherche des autorisations
-        $txt_req = "SELECT id FROM `tracegps_autorisations` join tracegps_vue_utilisateurs on tracegps_vue_utilisateurs.id = tracegps_autorisations.idAutorisant" ;
+        $txt_req = "SELECT id FROM tracegps_autorisations join tracegps_vue_utilisateurs on tracegps_vue_utilisateurs.id = tracegps_autorisations.idAutorisant" ;
         $txt_req .= " WHERE idAutorise = :idAutorise and idAutorisant = :idAutorisant and niveau = 1";
         $req = $this->cnx->prepare($txt_req);
         // liaison de la requête et de ses paramètres
-        $req->bindValue("idAutorise", utf8_encode($idAutorise), PDO::PARAM_STR);
-        $req->bindValue("idAutorisant", utf8_encode($idAutorisant), PDO::PARAM_STR);
+        $req->bindValue("idAutorise", utf8_encode($idAutorise), PDO::PARAM_INT);
+        $req->bindValue("idAutorisant", utf8_encode($idAutorisant), PDO::PARAM_INT);
         // exécution de la requête
         $req->execute();
         //$req->setFetchMode(PDO::FETCH_OBJ);
@@ -531,8 +531,8 @@ class DAO
         $req = $this->cnx->prepare($txt_req);
         
         // liaison de la requête et de ses paramètres
-        $req->bindValue("idAutorise", utf8_encode($idAutorise), PDO::PARAM_STR);
-        $req->bindValue("idAutorisant", utf8_encode($idAutorisant), PDO::PARAM_STR);
+        $req->bindValue("idAutorise", utf8_encode($idAutorise), PDO::PARAM_INT);
+        $req->bindValue("idAutorisant", utf8_encode($idAutorisant), PDO::PARAM_INT);
         // exécution de la requête
         $ok = $req->execute();
         // sortir en cas d'échec
