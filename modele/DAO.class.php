@@ -594,7 +594,7 @@ class DAO
         $req = $this->cnx->prepare($txt_req);
         // liaison de la requête et de ses paramètres
         $req->bindValue("idTrace", utf8_encode($unPointDeTrace->getIdTrace()), PDO::PARAM_INT);
-        $req->bindValue("id", utf8_encode($unPointDeTrace->getId()), PDO::PARAM_INT);
+        $req->bindValue("id", utf8_encode(($this->getUneTrace($unPointDeTrace->getIdTrace())->getNombrePoints())+1), PDO::PARAM_INT);
         $req->bindValue("latitude", utf8_encode($unPointDeTrace->getLatitude()), PDO::PARAM_STR);
         $req->bindValue("longitude", utf8_encode($unPointDeTrace->getLongitude()), PDO::PARAM_STR);
         $req->bindValue("altitude", utf8_encode($unPointDeTrace->getAltitude()), PDO::PARAM_STR);
@@ -613,6 +613,7 @@ class DAO
         $req->bindValue("rythmeCardio", utf8_encode($unPointDeTrace->getRythmeCardio()), PDO::PARAM_STR);
         // exécution de la requête
         $ok = $req->execute();
+        
         // sortir en cas d'échec
         if ( ! $ok) { return false; }
         

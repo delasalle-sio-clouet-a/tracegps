@@ -32,95 +32,97 @@ $rythmeCardio  = ( empty($this->request['rythmeCardio'])) ? "" : $this->request[
 $lang = ( empty($this->request['lang'])) ? "" : $this->request['lang'];
 
 
-    $donnee = "";
-    // "xml" par défaut si le paramètre lang est absent ou incorrect
-    if ($lang != "json") $lang = "xml";
-    
-    // Les paramètres doivent être présents
-    if ($pseudo == "" || $mdp == "" || $idTrace == "" || $dateHeure == "" || $rythmeCardio == "" || $latitude == "" || $longitude == "" || $altitude == "") {
-        $msg = "Erreur : données incomplètes.";
+$donnee = "";
+// "xml" par défaut si le paramètre lang est absent ou incorrect
+if ($lang != "json") $lang = "xml";
+
+// Les paramètres doivent être présents
+if ($pseudo == "" || $mdp == "" || $idTrace == "" || $dateHeure == "" || $rythmeCardio == "" || $latitude == "" || $longitude == "" || $altitude == "") {
+    $msg = "Erreur : données incomplètes.";
+    $code_reponse = 200;
+}
+else
+{
+    if ($dao->getUnUtilisateur($pseudo) == null || $dao->getUnUtilisateur($pseudo)->getMdpSha1() != $mdp)
+    {
+        $msg = "Erreur : authentification incorrecte.";
         $code_reponse = 200;
     }
-    else 
+    else
     {
-        if ($dao->getUnUtilisateur($pseudo) == null || $dao->getUnUtilisateur($pseudo)->getMdpSha1() != $mdp)
+        
+        if(!$dao->getUneTrace($idTrace))
         {
-            $msg = "Erreur : authentification incorrecte.";
+            $msg = "Erreur : le numéro de trace n'existe pas.";
             $code_reponse = 200;
         }
         else
         {
-            
-            if(!$dao->getUneTrace($idTrace))
-            {
-                $msg = "Erreur : le numéro de trace n'existe pas.";
+            $userId = $dao->getUnUtilisateur($pseudo)->getId();
+            if (!$dao->getLesTraces($userId)) {
+                $msg = "Erreur : le numéro de trace ne correspond pas à cet utilisateur.";
                 $code_reponse = 200;
+                
             }
             else
             {
-                $userId = $dao->getUnUtilisateur($pseudo)->getId();
-                if (!$dao->getLesTraces($userId)) {
+                $ok = false;
+                $curTrace = null;
+                foreach ($dao->getLesTraces($userId) as $trace)
+                {
+                    if($trace->getId() == $idTrace)
+                    {
+                        $curTrace = $trace;
+                        $ok = true;
+                    }
+                    
+                }
+                if(!$ok)
+                {
                     $msg = "Erreur : le numéro de trace ne correspond pas à cet utilisateur.";
                     $code_reponse = 200;
-                    
                 }
                 else
                 {
-                    $ok = false;
-                    $curTrace = null;
-                    foreach ($dao->getLesTraces($userId) as $trace)
+                    if($curTrace->getTerminee())
                     {
-                        if($trace->getId() == $idTrace)
-                        {
-                            $curTrace = $trace;
-                            $ok = true;
-                        }
-                        
-                    }
-                    if(!$ok)
-                    {
-                        $msg = "Erreur : le numéro de trace ne correspond pas à cet utilisateur.";
+                        $msg = "Erreur : la trace est déjà terminée.";
                         $code_reponse = 200;
+                        
                     }
                     else
                     {
-                        if($curTrace->getTerminee())
+                        
+                        
+                        $pointId =  $curTrace->getNombrePoints();
+                        $pdt = new PointDeTrace($idTrace, $pointId, $latitude, $longitude, $altitude, $dateHeure, $rythmeCardio, 0, 0, 0);
+                        if(!$dao->creerUnPointDeTrace($pdt))
                         {
-                            $msg = "Erreur : la trace est déjà terminée.";
+                            $msg = "Erreur : problème lors de l'enregistrement du point.";
                             $code_reponse = 200;
                             
                         }
                         else
                         {
-                            
-                            
-                            $pointId =  $curTrace->getNombrePoints();
-                            $pdt = new PointDeTrace($idTrace, $pointId, $latitude, $longitude, $altitude, $dateHeure, $rythmeCardio, 0, 0, 0);
-                            if(!$dao->creerUnPointDeTrace($pdt))
-                            {
-                                $msg = "Erreur : problème lors de l'enregistrement du point.";
-                                $code_reponse = 200;
-                                
-                            }
-                            else
-                            {
-                                $donnee = $pointId;
-                            }
-                            
+                            $msg = "Point créé.";
+                            $donnee = $pointId;
+                            $code_reponse = 200;
                         }
+                        
                     }
-                    
-                    
                 }
+                
+                
             }
+        }
     }
-   
+    
 }
-    
-    
-    // ferme la connexion à MySQL :
-    unset($dao);
-   
+
+
+// ferme la connexion à MySQL :
+unset($dao);
+
 
 
 // création du flux en sortie
@@ -151,10 +153,10 @@ function creerFluxXML($msg,$donnee)
 {
     /* Exemple de code XML
      <?xml version="1.0" encoding="UTF-8"?>
-    <data>
+     <data>
      <reponse>............. (message retourné par le service web) ...............</reponse>
      <donnees/>
-    </data>
+     </data>
      */
     
     // crée une instance de DOMdocument (DOM : Document Object Model)
@@ -182,14 +184,14 @@ function creerFluxXML($msg,$donnee)
         $elt_data->appendChild($elt_donnee);
         
     }
-    else 
+    else
     {
         $elt_donnee = $doc->createElement('donnees');
         $elt_data->appendChild($elt_donnee);
         $elt_id = $doc->createElement('id',$donnee);
         $elt_donnee->appendChild($elt_id);
     }
-
+    
     // Mise en forme finale
     $doc->formatOutput = true;
     
@@ -203,17 +205,17 @@ function creerFluxXML($msg,$donnee)
 function creerFluxJSON($msg,$donnee)
 {
     /* Exemple de code JSON
-      {
-         "data": 
-         {
-             "reponse": "............. (message retourné par le service web) ...............",
-             "donnees": [ ]
-         }
-         }
-      }
+     {
+     "data":
+     {
+     "reponse": "............. (message retourné par le service web) ...............",
+     "donnees": [ ]
+     }
+     }
+     }
      */
-    $elt_data = array();    
-
+    $elt_data = array();
+    
     // construction de l'élément "data"
     $elt_data["reponse"] = $msg;
     
@@ -222,7 +224,7 @@ function creerFluxJSON($msg,$donnee)
     {
         $elt_data["donnee"] = $donnee;
     }
-    else 
+    else
     {
         $ids = array();
         $elt_data["donnee"] = ($ids["id"] = $donnee);
@@ -233,7 +235,7 @@ function creerFluxJSON($msg,$donnee)
     
     // construction de la racine
     $elt_racine = ["data" => $elt_data];
-
+    
     
     // retourne le contenu JSON (l'option JSON_PRETTY_PRINT gère les sauts de ligne et l'indentation)
     return json_encode($elt_racine, JSON_PRETTY_PRINT);
@@ -241,4 +243,3 @@ function creerFluxJSON($msg,$donnee)
 
 // ================================================================================================
 ?>
-
