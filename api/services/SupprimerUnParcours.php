@@ -1,7 +1,7 @@
 <?php
 // Projet TraceGPS - services web
 // fichier :  api/services/SupprimerUnParcours.php
-// Dernière mise à jour : 07/12/2022 par Erwan
+// Dernière mise à jour : 09/12/2022 par Erwan
 // Rôle : ce service permet à un utilisateur de supprimer un de ses parcours (ou traces).
 // Le service web doit recevoir 4 paramètres :
 //pseudo : le pseudo de l'utilisateur qui demande à supprimer
