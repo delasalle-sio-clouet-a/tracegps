@@ -788,7 +788,7 @@ class DAO
         //$req->bindValue("id", utf8_encode($uneTrace->getId()), PDO::PARAM_INT);
         $req->bindValue(":dateDebut", utf8_encode($uneTrace->getDateHeureDebut()), PDO::PARAM_STR);
         
-        if($uneTrace->getDateHeureFin() == NULL)
+        if($uneTrace->getDateHeureFin() == NULL || $uneTrace->getDateHeureFin() == "")
         {
             $req->bindValue(":dateFin", NULL);
         }

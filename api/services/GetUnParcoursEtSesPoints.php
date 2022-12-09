@@ -43,7 +43,7 @@ if ($pseudo == "" || $mdp == "" || $idTrace == "") {
 }
 else 
 {
-    if ($dao->getUnUtilisateur($pseudo) == null || $dao->getUnUtilisateur($pseudo)->getMdpSha1() != $mdp)
+    if ($dao->getUnUtilisateur($pseudo) == null || strtolower($dao->getUnUtilisateur($pseudo)->getMdpSha1()) != strtolower($mdp))
     {
         $msg = "Erreur : authentification incorrecte.";
         $code_reponse = 200;

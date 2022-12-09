@@ -1,18 +1,14 @@
 <?php
-// Rôle : ce service web permet à un utilisateur d'obtenir la liste de ses parcours ou la liste des parcours
-// d'un utilisateur qui l'autorise.
+// Rôle : ce service web permet à un utilisateur de démarrer l'enregistrement d'un parcours.
 // Paramètres à fournir :
 // • pseudo : le pseudo de l'utilisateur
 // • mdp : le mot de passe de l'utilisateur hashé en sha1
-// • pseudoConsulte : le pseudo de l'utilisateur dont on veut consulter la liste des parcours
 // • lang : le langage utilisé pour le flux de données ("xml" ou "json")
 // Description du traitement :
 // • Vérifier que les données transmises sont complètes
-// • Vérifier l'authentification de l'utilisateur demandeur
-// • Vérifier l'existence du pseudo de l'utilisateur consulté
-// • Vérifier si l'utilisateur demandeur consulte ses propres traces, ou s’il est autorisé à consulter les
-// traces de l'utilisateur consulté
-// • Fournir la liste des traces de l'utilisateur consulté
+// • Vérifier l'authentification de l'utilisateur
+// • Créer une nouvelle trace dans la base de données pour cet utilisateur (avec les champs
+//     terminee=0 et dateFin=null)
 
 $dao = new DAO();
 
@@ -22,22 +18,19 @@ $dao = new DAO();
 // Récupération des données transmises
 $pseudo = ( empty($this->request['pseudo'])) ? "" : $this->request['pseudo'];
 $mdp = ( empty($this->request['mdp'])) ? "" : $this->request['mdp'];
-$pseudoConsulte  = ( empty($this->request['pseudoConsulte'])) ? "" : $this->request['pseudoConsulte'];
 $lang = ( empty($this->request['lang'])) ? "" : $this->request['lang'];
 
-$donnees = array();
-$donnees[] = "";
-$trace = null;
+$laTrace = null;
 
 // "xml" par défaut si le paramètre lang est absent ou incorrect
 if ($lang != "json") $lang = "xml";
 
 // Les paramètres doivent être présents
-if ($pseudo == "" || $mdp == "" || $pseudoConsulte == "") {
+if ($pseudo == "" || $mdp == "") {
     $msg = "Erreur : données incomplètes.";
     $code_reponse = 200;
 }
-else
+else 
 {
     if ($dao->getUnUtilisateur($pseudo) == null || strtolower($dao->getUnUtilisateur($pseudo)->getMdpSha1()) != strtolower($mdp))
     {
@@ -46,49 +39,33 @@ else
     }
     else
     {
-        if(!$dao->getUnUtilisateur($pseudoConsulte))
+        $unIdUtilisateur = $dao->getUnUtilisateur($pseudo)->getId();
+        $unId = 0;
+        $uneDateHeureDebut = date('Y-m-d H:i:s', time());
+        $uneDateHeureFin = "";
+        $terminee = 0;  
+        
+        $uneTrace = new Trace($unId, $uneDateHeureDebut, $uneDateHeureFin, $terminee, $unIdUtilisateur);
+        
+        if(!$dao->creerUneTrace($uneTrace))
         {
-            $msg = "Erreur : pseudo consulté inexistant.";
+            $msg = "Erreur : pas de connexion Internet.";
             $code_reponse = 200;
         }
         else 
         {
-            $ok = false;
-            $curId = $dao->getUnUtilisateur($pseudo)->getId();
-            $consultId = $dao->getUnUtilisateur($pseudoConsulte)->getId();
-            foreach ($dao->getLesUtilisateursAutorises($consultId) as $tempUser)
+            $msg = "Trace créée.";
+            $code_reponse = 200;
+
+            foreach ($dao->getLesTraces($unIdUtilisateur) as $tempTrace)
             {
-                if($tempUser->getId() == $curId)
-                {
-                    $ok = true;
-                    $idConsulte = $tempUser->getId();
-                }
+                $laTrace = $tempTrace;
             }
             
-            if(!$ok)
-            {
-                $msg = "Erreur : vous n'êtes pas autorisé par cet utilisateur.";
-                $code_reponse = 200;
-            }
-            else 
-            {
-                if(!$dao->getLesTraces($idConsulte))
-                {
-                    $msg = "Aucune trace pour l'utilisateur ". $pseudoConsulte .".";
-                    $code_reponse = 200;
-                    $trace = null;
-                }
-                else
-                {
-                    $msg = (sizeof($dao->getLesTraces($idConsulte))). " trace(s) pour l'utilisateur " . $pseudoConsulte. ".";
-                    $code_reponse = 200;
-                    $trace = $dao->getLesTraces($idConsulte);
-                }
-            }
+            
         }
     }
 }
-
 
 
 
@@ -102,11 +79,11 @@ unset($dao);
 // création du flux en sortie
 if ($lang == "xml") {
     $content_type = "application/xml; charset=utf-8";      // indique le format XML pour la réponse
-    $donnees = creerFluxXML ($msg,$trace);
+    $donnees = creerFluxXML ($msg,$laTrace);
 }
 else {
     $content_type = "application/json; charset=utf-8";      // indique le format Json pour la réponse
-    $donnees = creerFluxJSON ($msg,$trace);
+    $donnees = creerFluxJSON ($msg,$laTrace);
 }
 
 // envoi de la réponse HTTP
@@ -133,27 +110,7 @@ function creerFluxXML($msg,$trace)
     //  <dateHeureFin>2018-01-19 13:11:48</dateHeureFin>
     //  <idUtilisateur>2</idUtilisateur>
     //  </trace>
-    //  <lesPoints>
-    //  <point>
-    //  <id>1</id>
-    //  <latitude>48.2109</latitude>
-    //  <longitude>-1.5535</longitude>
-    //  <altitude>60</altitude>
-    //  <dateHeure>2018-01-19 13:08:48</dateHeure>
-    //  <rythmeCardio>81</rythmeCardio>
-    //  </point>
-    //  .....................................................................................................
-    //  <point>
-    //  <id>10</id>
-    //  <latitude>48.2199</latitude>
-    //  <longitude>-1.5445</longitude>
-    //  <altitude>150</altitude>
-    //  <dateHeure>2018-01-19 13:11:48</dateHeure>
-    //  <rythmeCardio>90</rythmeCardio>
-    //  </point>
-    //  </lesPoints>
-    //  </donnees>
-    // </data>
+
     
     
     // créé une instance de DOMDocument (Document Object Modele)
@@ -184,32 +141,20 @@ function creerFluxXML($msg,$trace)
         $elt_donnees = $doc->createElement('donnees');
         $elt_data->appendChild($elt_donnees );
         
-        $elt_lesTraces = $doc->createElement('lesTraces');
-        $elt_donnees->appendChild($elt_lesTraces);
-        
-        foreach ($trace as $tempTrace)
-        {
-            
-            $elt_trace = $doc->createElement('trace');
-            $elt_lesTraces->appendChild($elt_trace);
-
-            // id de la trace
-            $elt_idTrace = $doc->createElement('id',$tempTrace->getId());
-            $elt_trace->appendChild($elt_idTrace);
-            // date trace debut
-            $elt_dateHeureDebut = $doc->createElement('dateHeureDebut',$tempTrace->getDateHeureDebut());
-            $elt_trace->appendChild($elt_dateHeureDebut);
-            // trace termine
-            $elt_terminee = $doc->createElement('terminee',$tempTrace->getTerminee());
-            $elt_trace->appendChild($elt_terminee);
-            // date trace fin
-            $elt_dateHeureFin = $doc->createElement('dateHeureFin',$tempTrace->getDateHeureFin());
-            $elt_trace->appendChild($elt_dateHeureFin);
-            // id Utilisateur
-            $elt_idUtilisateur = $doc->createElement('idUtilisateur',$tempTrace->getIdUtilisateur());
-            $elt_trace->appendChild($elt_idUtilisateur);
- 
-        }
+        $elt_trace = $doc->createElement('Trace');
+        $elt_donnees->appendChild($elt_trace);
+        // id de la trace
+        $elt_idTrace = $doc->createElement('id',$trace->getId());
+        $elt_trace->appendChild($elt_idTrace);
+        // date trace debut
+        $elt_dateHeureDebut = $doc->createElement('dateHeureDebut',$trace->getDateHeureDebut());
+        $elt_trace->appendChild($elt_dateHeureDebut);
+        // trace termine
+        $elt_terminee = $doc->createElement('terminee',$trace->getTerminee());
+        $elt_trace->appendChild($elt_terminee);
+        // id Utilisateur
+        $elt_idUtilisateur = $doc->createElement('idUtilisateur',$trace->getIdUtilisateur());
+        $elt_trace->appendChild($elt_idUtilisateur);
         
         
     }
@@ -267,25 +212,15 @@ function creerFluxJSON($msg,$trace)
     
     if($trace != NULL)
     {
-        $lesTraces = array();
+        $elt_trace = array();
+        $elt_trace['id'] = $trace->getId();
+        $elt_trace['dateHeureDebut'] = $trace->getDateHeureDebut();
+        $elt_trace['terminee'] = $trace->getTerminee();
+        $elt_trace['idUtilisateur'] = $trace->getIdUtilisateur();
         
-        
-        foreach ($trace as $tempTrace)
-        {
-            $elt_trace = array();
-            $elt_trace['id'] = $tempTrace->getId();
-            $elt_trace['dateHeureDebut'] = $tempTrace->getDateHeureDebut();
-            $elt_trace['terminee'] = $tempTrace->getTerminee();
-            $elt_trace['dateHeureFin'] = $tempTrace->getDateHeureFin();
-            $elt_trace['idUtilisateur'] = $tempTrace->getIdUtilisateur();
+       
+        $elt_donnee = ["trace" => $elt_trace];
             
-            $lesTraces[] = $elt_trace;
-        }
-        
-        // construction de l'élément "lesUtilisateurs"
-
-        $elt_donnee = ["lesTraces" => $lesTraces];
-        
         // construction de l'élément "data"
         $elt_data = ["reponse" => $msg, "donnees" => $elt_donnee];
         
