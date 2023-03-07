@@ -24,10 +24,11 @@ class Rest {
          * ON FORCE LE CODE A 200 (reponse valide)
          * POUR PERMETTRE AU PARSEUR JAVA DE LIRE LE CONTENU MEME EN CAS D'ERREUR
          */
+		 $code_reponse = 200;
         $this->codeReponse = 200;
         $this->contentType = $content_type;       // mémorise le le format de la réponse HTTP
         $this->preparerEntetes();                 // prépare les entêtes HTTP de la réponse HTTP
-        echo $donnees;                            // envoie les données dans le corps de la réponse HTTP
+        echo $donnees;   						// envoie les données dans le corps de la réponse HTTP
         exit;                                     // fin de l'exécution
 	}		
 	

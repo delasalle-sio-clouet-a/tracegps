@@ -45,10 +45,11 @@ class Api extends Rest
             
             // l'action demandée n'existe pas, la réponse est 404 ("Page not found") et aucune donnée n'est envoyée
             default : {
-                $code_reponse = 404;            
+                $code_reponse = 404;       
+				//$code_reponse = 200; 				
                 $donnees = '';
                 $content_type = "application/json; charset=utf-8";      // indique le format Json pour la réponse
-                $this->envoyerReponse($code_reponse, $content_type, $donnees);    // envoi de la réponse HTTP
+                $this->envoyerReponse(200, $content_type, $donnees);    // envoi de la réponse HTTP
                 break;
             }  
         } 

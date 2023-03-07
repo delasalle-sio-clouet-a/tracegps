@@ -280,9 +280,13 @@ class DAO
             
             // suppression des traces de l'utilisateur (et des points correspondants)
             $lesTraces = $this->getLesTraces($idUtilisateur);
-            foreach ($lesTraces as $uneTrace) {
+			if($lesTraces != null)
+			{
+				foreach ($lesTraces as $uneTrace)
+				{
                 $this->supprimerUneTrace($uneTrace->getId());
-            }
+				}
+			}
             
             // préparation de la requête de suppression des autorisations
             $txt_req1 = "delete from tracegps_autorisations" ;
@@ -469,12 +473,12 @@ class DAO
     public function autoriseAConsulter($idAutorisant, $idAutorise)
     {
         // préparation de la requête de recherche des autorisations
-        $txt_req = "SELECT id FROM tracegps_autorisations join tracegps_vue_utilisateurs on tracegps_vue_utilisateurs.id = tracegps_autorisations.idAutorisant" ;
+        $txt_req = "SELECT id FROM `tracegps_autorisations` join tracegps_vue_utilisateurs on tracegps_vue_utilisateurs.id = tracegps_autorisations.idAutorisant" ;
         $txt_req .= " WHERE idAutorise = :idAutorise and idAutorisant = :idAutorisant and niveau = 1";
         $req = $this->cnx->prepare($txt_req);
         // liaison de la requête et de ses paramètres
-        $req->bindValue("idAutorise", utf8_encode($idAutorise), PDO::PARAM_INT);
-        $req->bindValue("idAutorisant", utf8_encode($idAutorisant), PDO::PARAM_INT);
+        $req->bindValue("idAutorise", utf8_encode($idAutorise), PDO::PARAM_STR);
+        $req->bindValue("idAutorisant", utf8_encode($idAutorisant), PDO::PARAM_STR);
         // exécution de la requête
         $req->execute();
         //$req->setFetchMode(PDO::FETCH_OBJ);
@@ -529,9 +533,8 @@ class DAO
         $txt_req = "DELETE FROM `tracegps_autorisations`";
         $txt_req .= " WHERE idAutorisant = :idAutorisant AND idAutorise = :idAutorise";
         $req = $this->cnx->prepare($txt_req);
-        
         // liaison de la requête et de ses paramètres
-        $req->bindValue("idAutorise", utf8_encode($idAutorise), PDO::PARAM_INT);
+		$req->bindValue("idAutorise", utf8_encode($idAutorise), PDO::PARAM_INT);
         $req->bindValue("idAutorisant", utf8_encode($idAutorisant), PDO::PARAM_INT);
         // exécution de la requête
         $ok = $req->execute();
@@ -594,7 +597,7 @@ class DAO
         $req = $this->cnx->prepare($txt_req);
         // liaison de la requête et de ses paramètres
         $req->bindValue("idTrace", utf8_encode($unPointDeTrace->getIdTrace()), PDO::PARAM_INT);
-        $req->bindValue("id", utf8_encode(($this->getUneTrace($unPointDeTrace->getIdTrace())->getNombrePoints())+1), PDO::PARAM_INT);
+		$req->bindValue("id", utf8_encode(($this->getUneTrace($unPointDeTrace->getIdTrace())->getNombrePoints())+1), PDO::PARAM_INT);
         $req->bindValue("latitude", utf8_encode($unPointDeTrace->getLatitude()), PDO::PARAM_STR);
         $req->bindValue("longitude", utf8_encode($unPointDeTrace->getLongitude()), PDO::PARAM_STR);
         $req->bindValue("altitude", utf8_encode($unPointDeTrace->getAltitude()), PDO::PARAM_STR);
@@ -613,7 +616,6 @@ class DAO
         $req->bindValue("rythmeCardio", utf8_encode($unPointDeTrace->getRythmeCardio()), PDO::PARAM_STR);
         // exécution de la requête
         $ok = $req->execute();
-        
         // sortir en cas d'échec
         if ( ! $ok) { return false; }
         
@@ -790,7 +792,7 @@ class DAO
         
         if($uneTrace->getDateHeureFin() == NULL || $uneTrace->getDateHeureFin() == "")
         {
-            $req->bindValue(":dateFin", NULL);
+            $req->bindValue(":dateFin",PDO::PARAM_NULL);
         }
         else 
         {

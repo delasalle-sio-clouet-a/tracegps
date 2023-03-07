@@ -21,10 +21,7 @@ $pseudo = ( empty($this->request['pseudo'])) ? "" : $this->request['pseudo'];
 $mdpSha1 = ( empty($this->request['mdp'])) ? "" : $this->request['mdp'];
 $lang = ( empty($this->request['lang'])) ? "" : $this->request['lang'];
 
-// initialisation du nombre de réponses
-$nombreAutorisations = 0;
 $lesUtilisateurs = array();
-
 
 // "xml" par défaut si le paramètre lang est absent ou incorrect
 if ($lang != "json") $lang = "xml";
@@ -248,3 +245,20 @@ function creerFluxJSON($msg, $lesUtilisateurs)
 }
 
 ?>
+Footer
+© 2022 GitHub, Inc.
+Footer navigation
+
+    Terms
+    Privacy
+    Security
+    Status
+    Docs
+    Contact GitHub
+    Pricing
+    API
+    Training
+    Blog
+    About
+
+tracegps/GetLesUtilisateursQueJautorise.php at master · delasalle-sio-clouet-a/tracegps

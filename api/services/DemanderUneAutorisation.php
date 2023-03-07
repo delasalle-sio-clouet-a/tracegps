@@ -41,7 +41,7 @@ else {
     // Vérification que les paramètres sont présents
     if ($pseudo == "" || $mdp == "" || $pseudoDestinataire == "" || $texteMessage == "" || $nomPrenom == "")
     {
-        $msg = "Erreur : données incomplètes";
+        $msg = "Erreur : données incomplètes.";
         $code_reponse = 400;
     }
     else
@@ -49,7 +49,7 @@ else {
         // Si authentification incorrecte ex : mot de passe incorrect, on en informe l'utilisateur
         $niveauConnexion = $dao->getNiveauConnexion($pseudo, $mdp);
         if ($niveauConnexion == 0) {
-            $msg = "Erreur : authentification incorrecte";
+            $msg = "Erreur : authentification incorrecte.";
             $code_reponse = 401;
         }
         else 

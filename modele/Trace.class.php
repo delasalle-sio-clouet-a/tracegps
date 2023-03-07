@@ -277,7 +277,7 @@ class Trace
             // $diff_int représente $diff mais en secondes
             $diff_int = $diff->s + ($diff->i * 60) + ($diff->h * 60 * 60);
             $current->setTempsCumule($precedent->getTempsCumule() + $diff_int);
-            if(doubleval($diff_int / 3600) == 0)
+			if(doubleval($diff_int / 3600) == 0)
             {
                 $current->setVitesse(0);
             }
@@ -285,7 +285,6 @@ class Trace
             {
                 $current->setVitesse($current->getDistance($precedent, $current) / (doubleval($diff_int / 3600)));
             }
-            
         }
     }
     
