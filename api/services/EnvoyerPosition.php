@@ -27,7 +27,7 @@ $idTrace  = ( empty($this->request['idTrace'])) ? "" : $this->request['idTrace']
 $dateHeure  = ( empty($this->request['dateHeure'])) ? "" : $this->request['dateHeure'];
 $latitude  = ( empty($this->request['latitude'])) ? "" : $this->request['latitude'];
 $longitude  = ( empty($this->request['longitude'])) ? "" : $this->request['longitude'];
-$altitude  = ( empty($this->request['altitde'])) ? "" : $this->request['altitude'];
+$altitude  = ( empty($this->request['altitude'])) ? "" : $this->request['altitude'];
 $rythmeCardio  = ( empty($this->request['rythmeCardio'])) ? "" : $this->request['rythmeCardio'];
 $lang = ( empty($this->request['lang'])) ? "" : $this->request['lang'];
 

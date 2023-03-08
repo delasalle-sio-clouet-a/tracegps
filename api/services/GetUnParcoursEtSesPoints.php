@@ -58,7 +58,7 @@ else
         }
         else 
         {
-            // check si la trace est consulttable ou est appartient a l'utilisateur
+            // check si la trace est consulttable ou appartient a l'utilisateur
             
             $userId = $dao->getUnUtilisateur($pseudo)->getId();
             
