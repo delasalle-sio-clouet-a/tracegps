@@ -8,11 +8,13 @@
 
 package clouet.classes;
 
+import android.util.Log;
+
 import java.util.ArrayList;
 
 import java.util.Date;
 
-import javax.xml.soap.Node;
+//import javax.xml.soap.Node;
 
 import java.io.InputStream;
 import java.net.URLEncoder;
@@ -29,7 +31,7 @@ public class PasserelleServicesWebXML extends PasserelleXML {
 	// Adresse de l'hébergeur Internet
 	//private static String _adresseHebergeur = "http://sio.lyceedelasalle.fr/tracegps/api/";
 	// Adresse du localhost en cas d'exécution sur le poste de développement (projet de tests des classes)
-	private static String _adresseHebergeur = "http://127.0.0.1/ws-php-clouet/tracegps/api/";
+	private static String _adresseHebergeur = "http://sio.lyceedelasalle.fr/tracegps/api/";
 
 	// Noms des services web déjà traités par la passerelle
 	private static String _urlArreterEnregistrementParcours = "ArreterEnregistrementParcours";
@@ -145,13 +147,28 @@ public class PasserelleServicesWebXML extends PasserelleXML {
 				String unPseudo = courant.getElementsByTagName("pseudo").item(0).getTextContent();
 				String unMdpSha1 = "";								// par sécurité, on ne récupère pas le mot de passe
 				String uneAdrMail = courant.getElementsByTagName("adrMail").item(0).getTextContent();
-				String unNumTel = courant.getElementsByTagName("numTel").item(0).getTextContent();
+				String unNumTel;
+				try
+				{
+					unNumTel = courant.getElementsByTagName("numTel").item(0).getTextContent();
+				}
+				catch(Exception e)
+				{
+					unNumTel = "";
+				}
 				int unNiveau = Integer.parseInt(courant.getElementsByTagName("niveau").item(0).getTextContent());
 				Date uneDateCreation = Outils.convertirEnDate(courant.getElementsByTagName("dateCreation").item(0).getTextContent(), formatDateUS);
 				int unNbTraces = Integer.parseInt(courant.getElementsByTagName("nbTraces").item(0).getTextContent());
 				Date uneDateDerniereTrace = null;
-				if (unNbTraces > 0)
-					uneDateDerniereTrace = Outils.convertirEnDate(courant.getElementsByTagName("dateDerniereTrace").item(0).getTextContent(), formatDateUS);
+				try
+				{
+					if (unNbTraces > 0)
+						uneDateDerniereTrace = Outils.convertirEnDate(courant.getElementsByTagName("dateDerniereTrace").item(0).getTextContent(), formatDateUS);
+				}
+				catch(Exception e)
+				{
+					uneDateDerniereTrace = null;
+				}
 
 				// crée un objet Utilisateur
 				Utilisateur unUtilisateur = new Utilisateur(unId, unPseudo, unMdpSha1, uneAdrMail, unNumTel, unNiveau, uneDateCreation, unNbTraces, uneDateDerniereTrace);
@@ -349,7 +366,15 @@ public class PasserelleServicesWebXML extends PasserelleXML {
 			reponse = racine.getElementsByTagName("reponse").item(0).getTextContent();
 			
 			Element donnees = (Element) racine.getElementsByTagName("donnees").item(0);
-			Element utilisateurs = (Element) donnees.getElementsByTagName("lesUtilisateurs").item(0);
+			Element utilisateurs = null;
+			try
+			{
+				utilisateurs = (Element) donnees.getElementsByTagName("lesUtilisateurs").item(0);
+			}
+			catch(Exception e)
+			{
+				return reponse;
+			}
 			
 			// il peut y avoir plusieurs utilisateurs
 			NodeList nl = utilisateurs.getElementsByTagName("utilisateur");
@@ -361,11 +386,27 @@ public class PasserelleServicesWebXML extends PasserelleXML {
 				String userPseudo = userInfo.getElementsByTagName("pseudo").item(0).getTextContent();
 				String userMdpSha1 = mdpSha1;
 				String userAdrMail = userInfo.getElementsByTagName("adrMail").item(0).getTextContent();
-				String userNumTel = userInfo.getElementsByTagName("numTel").item(0).getTextContent();
+				String userNumTel;
+				try
+				{
+					userNumTel = userInfo.getElementsByTagName("numTel").item(0).getTextContent();
+				}
+				catch(Exception e)
+				{
+					userNumTel = "";
+				}
 				Integer userNiveau = Integer.valueOf(userInfo.getElementsByTagName("niveau").item(0).getTextContent());
 				Date userDateCreation = Outils.convertirEnDate(userInfo.getElementsByTagName("dateCreation").item(0).getTextContent());
 				Integer userNbTraces = Integer.valueOf(userInfo.getElementsByTagName("nbTraces").item(0).getTextContent());
-				Date userDateDerniereTrace = Outils.convertirEnDate(userInfo.getElementsByTagName("dateDerniereTrace").item(0).getTextContent());
+				Date userDateDerniereTrace;
+				try
+				{
+					userDateDerniereTrace = Outils.convertirEnDate(userInfo.getElementsByTagName("dateDerniereTrace").item(0).getTextContent());
+				}
+				catch(Exception e)
+				{
+					userDateDerniereTrace = null;
+				}
 				Utilisateur user = new Utilisateur(userId, userPseudo, userMdpSha1,
 						userAdrMail, userNumTel, userNiveau, userDateCreation,
 						userNbTraces, userDateDerniereTrace);
@@ -409,7 +450,15 @@ public class PasserelleServicesWebXML extends PasserelleXML {
 			reponse = racine.getElementsByTagName("reponse").item(0).getTextContent();
 			
 			Element donnees = (Element) racine.getElementsByTagName("donnees").item(0);
-			Element utilisateurs = (Element) donnees.getElementsByTagName("lesUtilisateurs").item(0);
+			Element utilisateurs = null;
+			try
+			{
+				utilisateurs = (Element) donnees.getElementsByTagName("lesUtilisateurs").item(0);
+			}
+			catch(Exception e)
+			{
+				return reponse;
+			}
 			
 			// il peut y avoir plusieurs utilisateurs
 			NodeList nl = utilisateurs.getElementsByTagName("utilisateur");
@@ -421,11 +470,27 @@ public class PasserelleServicesWebXML extends PasserelleXML {
 				String userPseudo = userInfo.getElementsByTagName("pseudo").item(0).getTextContent();
 				String userMdpSha1 = mdpSha1;
 				String userAdrMail = userInfo.getElementsByTagName("adrMail").item(0).getTextContent();
-				String userNumTel = userInfo.getElementsByTagName("numTel").item(0).getTextContent();
+				String userNumTel;
+				try
+				{
+					userNumTel = userInfo.getElementsByTagName("numTel").item(0).getTextContent();
+				}
+				catch(Exception e)
+				{
+					userNumTel = "";
+				}
 				Integer userNiveau = Integer.valueOf(userInfo.getElementsByTagName("niveau").item(0).getTextContent());
 				Date userDateCreation = Outils.convertirEnDate(userInfo.getElementsByTagName("dateCreation").item(0).getTextContent());
 				Integer userNbTraces = Integer.valueOf(userInfo.getElementsByTagName("nbTraces").item(0).getTextContent());
-				Date userDateDerniereTrace = Outils.convertirEnDate(userInfo.getElementsByTagName("dateDerniereTrace").item(0).getTextContent());
+				Date userDateDerniereTrace;
+				try
+				{
+					userDateDerniereTrace = Outils.convertirEnDate(userInfo.getElementsByTagName("dateDerniereTrace").item(0).getTextContent());
+				}
+				catch(Exception e)
+				{
+					userDateDerniereTrace = null;
+				}
 				Utilisateur user = new Utilisateur(userId, userPseudo, userMdpSha1,
 						userAdrMail, userNumTel, userNiveau, userDateCreation,
 						userNbTraces, userDateDerniereTrace);
@@ -539,7 +604,7 @@ public class PasserelleServicesWebXML extends PasserelleXML {
 			urlDuServiceWeb += "&longitude=" + lePoint.getLongitude();
 			urlDuServiceWeb += "&altitude=" + lePoint.getAltitude();
 			urlDuServiceWeb += "&rythmeCardio=" + lePoint.getRythmeCardio();
-			urlDuServiceWeb = urlDuServiceWeb.replace(' ', '%');
+			urlDuServiceWeb = urlDuServiceWeb.replace(" ", "%20");
 			
 			System.out.println(urlDuServiceWeb);
 			
@@ -552,6 +617,17 @@ public class PasserelleServicesWebXML extends PasserelleXML {
 			// parsing du flux XML
 			Element racine = (Element) leDocument.getElementsByTagName("data").item(0);
 			reponse = racine.getElementsByTagName("reponse").item(0).getTextContent();
+
+			Element donnees = (Element) racine.getElementsByTagName("donnees").item(0);
+			try
+			{
+				int idPoint = Integer.valueOf(donnees.getElementsByTagName("id").item(0).getTextContent());
+				lePoint.setId(idPoint);
+			}
+			catch(Exception e)
+			{
+				return reponse;
+			}
 			
 			return reponse;
 		}
@@ -593,11 +669,11 @@ public class PasserelleServicesWebXML extends PasserelleXML {
 			Element donnees = (Element) racine.getElementsByTagName("donnees").item(0);
 			
 			// infos trace
-			Element trace = (Element) donnees.getElementsByTagName("Trace").item(0);
+			Element trace = (Element) donnees.getElementsByTagName("trace").item(0);
 			
 			//Integer traceId = Integer.valueOf(trace.getElementsByTagName("id").item(0).getTextContent());
 			Date traceDateDebut = Outils.convertirEnDate(trace.getElementsByTagName("dateHeureDebut").item(0).getTextContent(), "yyyy-MM-dd hh:mm:ss");
-			Integer traceTerminee = Integer.valueOf(trace.getElementsByTagName("id").item(0).getTextContent());
+			Integer traceTerminee = Integer.valueOf(trace.getElementsByTagName("terminee").item(0).getTextContent());
 			Date traceDateFin = Outils.convertirEnDate(trace.getElementsByTagName("dateHeureFin").item(0).getTextContent(), "yyyy-MM-dd hh:mm:ss");
 			
 			laTrace.setDateHeureDebut(traceDateDebut);
@@ -679,7 +755,15 @@ public class PasserelleServicesWebXML extends PasserelleXML {
 					Date traceDateDebut = Outils.convertirEnDate(traceInfo.getElementsByTagName("dateHeureDebut").item(0).getTextContent(), "yyyy-MM-dd hh:mm:ss");
 					Integer traceTerminee = Integer.valueOf(traceInfo.getElementsByTagName("terminee").item(0).getTextContent());
 					boolean terminee = (traceTerminee == 1) ? true : false;
-					Date traceDateFin = Outils.convertirEnDate(traceInfo.getElementsByTagName("dateHeureFin").item(0).getTextContent(), "yyyy-MM-dd hh:mm:ss");
+					Date traceDateFin = null;
+					try
+					{
+						traceDateFin = Outils.convertirEnDate(traceInfo.getElementsByTagName("dateHeureFin").item(0).getTextContent(), "yyyy-MM-dd hh:mm:ss");
+					}
+					catch(Exception e)
+					{
+						traceDateFin = null;
+					}
 					Double traceDistance = null;
 					if(terminee)
 					{
@@ -701,7 +785,7 @@ public class PasserelleServicesWebXML extends PasserelleXML {
 					lesTraces.add(uneTrace);
 				}
 			}
-			
+			Log.d("passerelle web", String.valueOf(lesTraces.size()));
 			return reponse;
 		}
 		catch (Exception ex)
@@ -773,21 +857,23 @@ public class PasserelleServicesWebXML extends PasserelleXML {
 			Element racine = (Element) leDocument.getElementsByTagName("data").item(0);
 			reponse = racine.getElementsByTagName("reponse").item(0).getTextContent();
 			
-			if(reponse == "Trace créée.")
+			if(reponse.equals("Trace créée."))
 			{
 				Element donnees = (Element) racine.getElementsByTagName("donnees").item(0);
 				
 				// infos trace
-				Element trace = (Element) donnees.getElementsByTagName("lesTraces").item(0);
+				Element trace = (Element) donnees.getElementsByTagName("trace").item(0);
 				
 				// récupération des détails de la trace
 				Integer traceId = Integer.valueOf(trace.getElementsByTagName("id").item(0).getTextContent());
+				Log.d("idTrace : ", traceId.toString());
 				Date traceDateDebut = Outils.convertirEnDate(trace.getElementsByTagName("dateHeureDebut").item(0).getTextContent(), "yyyy-MM-dd hh:mm:ss");
 				boolean traceTerminee = false;
 				Integer traceIdUser = Integer.valueOf(trace.getElementsByTagName("idUtilisateur").item(0).getTextContent());
 				
 				// actualisation de la trace en local
 				laTrace.setId(traceId);
+				Log.d("trace get id : ", String.valueOf(laTrace.getId()));
 				laTrace.setDateHeureDebut(traceDateDebut);
 				laTrace.setTerminee(traceTerminee);
 				laTrace.setIdUtilisateur(traceIdUser);
