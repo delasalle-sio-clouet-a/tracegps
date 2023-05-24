@@ -1,235 +1,194 @@
 <?php
-// Rôle : ce service web permet à un utilisateur de démarrer l'enregistrement d'un parcours.
-// Paramètres à fournir :
-// • pseudo : le pseudo de l'utilisateur
-// • mdp : le mot de passe de l'utilisateur hashé en sha1
-// • lang : le langage utilisé pour le flux de données ("xml" ou "json")
-// Description du traitement :
-// • Vérifier que les données transmises sont complètes
-// • Vérifier l'authentification de l'utilisateur
-// • Créer une nouvelle trace dans la base de données pour cet utilisateur (avec les champs
-//     terminee=0 et dateFin=null)
+// Projet TraceGPS - services web
+// fichier :  api/services/DemarrerEnregistrementParcours.php
+// Dernière mise à jour : 3/7/2019 par Jim
 
+// Rôle : ce service permet à un utilisateur de démarrer l'enregistrement d'un parcours
+// Le service web doit recevoir 3 paramètres :
+//     pseudo : le pseudo de l'utilisateur
+//     mdp : le mot de passe hashé en sha1
+//     lang : le langage du flux de données retourné ("xml" ou "json") ; "xml" par défaut si le paramètre est absent ou incorrect
+// Le service retourne un flux de données XML ou JSON contenant un compte-rendu d'exécution (avec les données de la trace créée)
+
+// Les paramètres doivent être passés par la méthode GET :
+//     http://<hébergeur>/tracegps/api/DemarrerEnregistrementParcours?pseudo=europa&mdp=13e3668bbee30b004380052b086457b014504b3e&lang=xml
+
+// connexion du serveur web à la base MySQL
 $dao = new DAO();
-
-
-
 
 // Récupération des données transmises
 $pseudo = ( empty($this->request['pseudo'])) ? "" : $this->request['pseudo'];
-$mdp = ( empty($this->request['mdp'])) ? "" : $this->request['mdp'];
+$mdpSha1 = ( empty($this->request['mdp'])) ? "" : $this->request['mdp'];
 $lang = ( empty($this->request['lang'])) ? "" : $this->request['lang'];
-
-$laTrace = null;
 
 // "xml" par défaut si le paramètre lang est absent ou incorrect
 if ($lang != "json") $lang = "xml";
 
-// Les paramètres doivent être présents
-if ($pseudo == "" || $mdp == "") {
-    $msg = "Erreur : données incomplètes.";
-    $code_reponse = 200;
+// initialisation
+$laTrace = null;
+
+// La méthode HTTP utilisée doit être GET
+if ($this->getMethodeRequete() != "GET")
+{	$msg = "Erreur : méthode HTTP incorrecte.";
+    $code_reponse = 406;
 }
-else 
-{
-    if ($dao->getUnUtilisateur($pseudo) == null || strtolower($dao->getUnUtilisateur($pseudo)->getMdpSha1()) != strtolower($mdp))
-    {
-        $msg = "Erreur : authentification incorrecte.";
-        $code_reponse = 200;
+else {
+    // Les paramètres doivent être présents
+    if ( $pseudo == "" || $mdpSha1 == "" )
+    {	$msg = "Erreur : données incomplètes.";
+        $code_reponse = 400;
     }
     else
-    {
-        $unIdUtilisateur = $dao->getUnUtilisateur($pseudo)->getId();
-        $unId = 0;
-        $uneDateHeureDebut = date('Y-m-d H:i:s', time());
-        $uneDateHeureFin = "";
-        $terminee = 0;  
-        
-        $uneTrace = new Trace($unId, $uneDateHeureDebut, $uneDateHeureFin, $terminee, $unIdUtilisateur);
-        
-        if(!$dao->creerUneTrace($uneTrace))
-        {
-            $msg = "Erreur : pas de connexion Internet.";
-            $code_reponse = 200;
+    {	if ( $dao->getNiveauConnexion($pseudo, $mdpSha1) == 0 )
+        {   $msg = "Erreur : authentification incorrecte.";
+            $code_reponse = 401;
         }
-        else 
-        {
+        else
+        {   // récupération de l'id de l'utilisateur
+            $idUtilisateur = $dao->getUnUtilisateur($pseudo)->getId();
+            
+            // créer et enregistrer la trace
+            $laTrace = new Trace(0, date('Y-m-d H:i:s', time()), null, "0", $idUtilisateur);
+            $ok = $dao->creerUneTrace($laTrace);
+            // récupération de l'id de la trace
+            $idTrace = $laTrace->getId();
+            
             $msg = "Trace créée.";
             $code_reponse = 200;
-
-            foreach ($dao->getLesTraces($unIdUtilisateur) as $tempTrace)
-            {
-                $laTrace = $tempTrace;
-            }
-            
-            
         }
     }
 }
-
-
-
-
-
 // ferme la connexion à MySQL :
 unset($dao);
-
-
 
 // création du flux en sortie
 if ($lang == "xml") {
     $content_type = "application/xml; charset=utf-8";      // indique le format XML pour la réponse
-    $donnees = creerFluxXML ($msg,$laTrace);
+    $donnees = creerFluxXML($msg, $laTrace);
 }
 else {
     $content_type = "application/json; charset=utf-8";      // indique le format Json pour la réponse
-    $donnees = creerFluxJSON ($msg,$laTrace);
+    $donnees = creerFluxJSON($msg, $laTrace);
 }
 
 // envoi de la réponse HTTP
 $this->envoyerReponse($code_reponse, $content_type, $donnees);
 
-//fin du programme pour ne pas enchainer sur les 2 fonctions qui suivent
+// fin du programme (pour ne pas enchainer sur les 2 fonctions qui suivent)
 exit;
 
-// =======================================================================================================================
+// ================================================================================================
 
-//creation du flux XML en sortie
-function creerFluxXML($msg,$trace)
+// création du flux XML en sortie
+function creerFluxXML($msg, $laTrace)
 {
+    /* Exemple de code XML
+        <?xml version="1.0" encoding="UTF-8"?>
+        <!--Service web DemarrerEnregistrementParcours - BTS SIO - Lycée De La Salle - Rennes-->
+        <data>
+          <reponse>Trace créée.</reponse>
+          <donnees>
+            <trace>
+              <id>23</id>
+              <dateHeureDebut>2018-11-15 16:15:54</dateHeureDebut>
+              <terminee>0</terminee>
+              <idUtilisateur>3</idUtilisateur>
+            </trace>
+          </donnees>
+        </data>
+     */
     
-    //     xml version="1.0" encoding="UTF-8"
-    // <!-- <!--Service web GetUnParcoursEtSesPoints - BTS SIO - Lycée De La Salle - Rennes--> -->
-    // <data>
-    //  <reponse>Données de la trace demandée.</reponse>
-    //  <donnees>
-    //  <trace>
-    //  <id>2</id>
-    //  <dateHeureDebut>2018-01-19 13:08:48</dateHeureDebut>
-    //  <terminee>1</terminee>
-    //  <dateHeureFin>2018-01-19 13:11:48</dateHeureFin>
-    //  <idUtilisateur>2</idUtilisateur>
-    //  </trace>
+    // crée une instance de DOMdocument (DOM : Document Object Model)
+	$doc = new DOMDocument();	
 
-    
-    
-    // créé une instance de DOMDocument (Document Object Modele)
-    $doc = new DOMDocument();
-    
-    // spécifie la version et le type d'encodage
-    $doc->version ='1.0';
-    $doc->encoding ='utf-8';
-    
-    //créé un commentaire et l'encode en UTF-8
-    $elt_commentaire = $doc->createComment('Service web GetUnParcoursEtSesPoints.php - BTS SIO - Lycée De La Salle - Rennes');
-    
-    // place ce commentaire à la racine du document XML
-    $doc->appendChild($elt_commentaire);
-    
-    // crée l'élément 'data' à la racine du document XML
-    $elt_data = $doc->createElement('data');
-    $doc->appendChild($elt_data);
-    
-    // place l'élément 'reponse' juste dans l'élément 'data'
-    $elt_reponse = $doc->createElement('reponse', $msg);
-    $elt_data->appendChild($elt_reponse);
-    
-    // check de si le traitement est réussi
-    if(!is_null($trace) || $trace  != NULL)
-    {
-        // place l'element "donnees" dans l'element data
-        $elt_donnees = $doc->createElement('donnees');
-        $elt_data->appendChild($elt_donnees );
-        
-        $elt_trace = $doc->createElement('Trace');
-        $elt_donnees->appendChild($elt_trace);
-        // id de la trace
-        $elt_idTrace = $doc->createElement('id',$trace->getId());
-        $elt_trace->appendChild($elt_idTrace);
-        // date trace debut
-        $elt_dateHeureDebut = $doc->createElement('dateHeureDebut',$trace->getDateHeureDebut());
-        $elt_trace->appendChild($elt_dateHeureDebut);
-        // trace termine
-        $elt_terminee = $doc->createElement('terminee',$trace->getTerminee());
-        $elt_trace->appendChild($elt_terminee);
-        // id Utilisateur
-        $elt_idUtilisateur = $doc->createElement('idUtilisateur',$trace->getIdUtilisateur());
-        $elt_trace->appendChild($elt_idUtilisateur);
-        
-        
-    }
-    
-    
-    // Mise en forme finale
-    $doc->formatOutput = true;
-    // renvoie le contenu XML
-    return $doc->saveXML();
+	// specifie la version et le type d'encodage
+	$doc->version = '1.0';
+	$doc->encoding = 'UTF-8';
+	
+	// crée un commentaire et l'encode en UTF-8
+	$elt_commentaire = $doc->createComment('Service web DemarrerEnregistrementParcours - BTS SIO - Lycée De La Salle - Rennes');
+	// place ce commentaire à la racine du document XML
+	$doc->appendChild($elt_commentaire);
+		
+	// crée l'élément 'data' à la racine du document XML
+	$elt_data = $doc->createElement('data');
+	$doc->appendChild($elt_data);
+	
+	// place l'élément 'reponse' juste après l'élément 'data'
+	$elt_reponse = $doc->createElement('reponse', $msg);
+	$elt_data->appendChild($elt_reponse);
+	
+	if ($laTrace != null)
+	{
+	    // place l'élément 'donnees' dans l'élément 'data'
+	    $elt_donnees = $doc->createElement('donnees');
+	    $elt_data->appendChild($elt_donnees);
+	    
+	    // crée un élément vide 'trace'
+	    $elt_trace = $doc->createElement('trace');
+	    // place l'élément 'trace' dans l'élément 'donnees'
+	    $elt_donnees->appendChild($elt_trace);
+	    
+	    // crée les éléments enfants de l'élément 'trace'
+    	$elt_idTrace = $doc->createElement('id', $laTrace->getId());
+    	$elt_trace->appendChild($elt_idTrace);
+    	
+    	$elt_dateHeureDebut = $doc->createElement('dateHeureDebut', $laTrace->getDateHeureDebut());
+    	$elt_trace->appendChild($elt_dateHeureDebut);
+    	
+    	$elt_terminee = $doc->createElement('terminee', $laTrace->getTerminee());
+    	$elt_trace->appendChild($elt_terminee);
+    	
+    	$elt_idUtilisateur = $doc->createElement('idUtilisateur', $laTrace->getIdUtilisateur());
+    	$elt_trace->appendChild($elt_idUtilisateur);
+	}
+	
+	// Mise en forme finale
+	$doc->formatOutput = true;
+	
+	// renvoie le contenu XML
+	return $doc->saveXML();
 }
 
 // ================================================================================================
 
 // création du flux JSON en sortie
-function creerFluxJSON($msg,$trace)
+function creerFluxJSON($msg, $laTrace)
 {
     /* Exemple de code JSON
-     {
-     "data": {
-     "reponse": "Données de la trace demandée.",
-     "donnees": {
-     "trace": {
-     "id": "2",
-     "dateHeureDebut": "2018-01-19 13:08:48",
-     "terminee: "1",
-     "dateHeureFin: "2018-01-19 13:11:48",
-     "idUtilisateur: "2"
-     }
-     "lesPoints": [
-     {
-     "id": "1",
-     "latitude": "48.2109",
-     "longitude": "-1.5535",
-     "altitude": "60",
-     "dateHeure": "2018-01-19 13:08:48",
-     "rythmeCardio": "81"
-     },
-     ..................................
-     {
-     "id"10</id>,
-     "latitude": "48.2199",
-     "longitude": "-1.5445",
-     "altitude": "150",
-     "dateHeure": "2018-01-19 13:11:48",
-     "rythmeCardio": "90"
-     }
-     ]
-     }
-     }
-     }
+        {
+            "data": {
+                "reponse": "Trace cr\u00e9\u00e9e.",
+                "donnees": {
+                    "trace": {
+                        "id": "23",
+                        "dateHeureDebut": "2018-11-15 16:15:54",
+                        "terminee: "0",
+                        "idUtilisateur: "3"
+                    }
+                }
+            }
+        }
      */
     
-    
-    
-    
-    if($trace != NULL)
-    {
-        $elt_trace = array();
-        $elt_trace['id'] = $trace->getId();
-        $elt_trace['dateHeureDebut'] = $trace->getDateHeureDebut();
-        $elt_trace['terminee'] = $trace->getTerminee();
-        $elt_trace['idUtilisateur'] = $trace->getIdUtilisateur();
-        
-       
-        $elt_donnee = ["trace" => $elt_trace];
-            
+    if ($laTrace == null) {
         // construction de l'élément "data"
-        $elt_data = ["reponse" => $msg, "donnees" => $elt_donnee];
-        
-    }
-    else
-    {
         $elt_data = ["reponse" => $msg];
     }
-    
+    else {
+        // construction de l'élément "trace"
+        $unObjetTrace = array();
+        $unObjetTrace["id"] = $laTrace->getId();
+        $unObjetTrace["dateHeureDebut"] = $laTrace->getDateHeureDebut();
+        $unObjetTrace["terminee"] = $laTrace->getTerminee();
+        $unObjetTrace["idUtilisateur"] = $laTrace->getIdUtilisateur();
+        
+        // construction de l'élément "donnees"
+        $elt_donnees = ["trace" => $unObjetTrace];
+        
+        // construction de l'élément "data"
+        $elt_data = ["reponse" => $msg, "donnees" => $elt_donnees];
+    }
     
     // construction de la racine
     $elt_racine = ["data" => $elt_data];
@@ -238,7 +197,5 @@ function creerFluxJSON($msg,$trace)
     return json_encode($elt_racine, JSON_PRETTY_PRINT);
 }
 
-
-
-
-
+// ================================================================================================
+?>

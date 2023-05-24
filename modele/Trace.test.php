@@ -20,7 +20,8 @@ echo "<h3>Test de la classe Trace</h3>";
 
 // création de 2 traces
 $trace1 = new Trace(1, "2017-12-11 14:00:00", "2017-12-11 14:10:00", true, 2);		// cette trace va comporter 5 points
-$trace2 = new Trace(2, "2017-12-11 16:00:00", null, false, 3);		                // cette trace restera vide
+$trace2 = new Trace(2, "2017-12-11 16:00:00", null, false, 3);	// cette trace restera vide
+$trace3 = new Trace(3, "TraceErwan", "2023-05-24 15:19:00", "2023-05-24 15:22:00", true, 4); //Cette trace a un nom 
 
 // création de 5 points de trace et ajout à $trace1
 $uneDate1 = "2017-12-11 14:00:00";

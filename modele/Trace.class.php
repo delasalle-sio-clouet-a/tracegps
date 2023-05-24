@@ -8,6 +8,7 @@ class Trace
     // ------------------------------------------------------------------------------------------------------
     
     private $id; // identifiant de la trace
+    private $nomTrace; //nom de la trace
     private $dateHeureDebut; // date et heure de début
     private $dateHeureFin; // date et heure de fin
     private $terminee; // true si la trace est terminée, false sinon
@@ -18,10 +19,11 @@ class Trace
     // ----------------------------------------- Constructeur -----------------------------------------------
     // ------------------------------------------------------------------------------------------------------
     
-    public function __construct($unId, $uneDateHeureDebut, $uneDateHeureFin, $terminee, $unIdUtilisateur)
+    public function __construct($unId, $unNomTrace, $uneDateHeureDebut, $uneDateHeureFin, $terminee, $unIdUtilisateur)
     {
         // A VOUS DE TROUVER LE CODE MANQUANT
         $this->id = $unId;
+        $this->nomTrace = $unNomTrace;
         $this->dateHeureDebut = $uneDateHeureDebut;
         $this->dateHeureFin = $uneDateHeureFin;
         $this->terminee = $terminee;
@@ -35,6 +37,9 @@ class Trace
     
     public function getId() {return $this->id;}
     public function setId($unId) {$this->id = $unId;}
+    
+    public function getNomTrace() {return $this->nomTrace;}
+    public function setNomTrace($unNomTrace) {$this->nomTrace = $unNomTrace;}
     
     public function getDateHeureDebut() {return $this->dateHeureDebut;}
     public function setDateHeureDebut($uneDateHeureDebut) {$this->dateHeureDebut = $uneDateHeureDebut;}
@@ -53,6 +58,7 @@ class Trace
     // Fournit une chaine contenant toutes les données de l'objet
     public function toString() {
         $msg = "Id : " . $this->getId() . "<br>";
+        $msg ="Nom : " . $this->getNomTrace() . "<br>"; 
         $msg .= "Utilisateur : " . $this->getIdUtilisateur() . "<br>";
         if ($this->getDateHeureDebut() != null) {
             $msg .= "Heure de début : " . $this->getDateHeureDebut() . "<br>";
@@ -174,7 +180,7 @@ class Trace
         $minutes = $temps % 60;
         $temps = $temps / 60;
         $heures = $temps % 60;
-        // construction u message retourne
+        // construction  message retourne
         $msg = "";
         if($heures < 10)
         {
